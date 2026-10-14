@@ -1,0 +1,98 @@
+using HarmonyLib;
+using UnityEngine;
+using Zyklus.Managers;
+using Zyklus.Network;
+using Zyklus.Player;
+using Zyklus.UI;
+using Zyklus.UI.CharacterSelectMenu;
+
+namespace Morta4P
+{
+    // The character select screen was written for exactly two players and assumes the
+    // remote client is always P2. These patches make it use the real player number.
+    internal static class CharacterSelectUtil
+    {
+        internal static bool TryGetLocalPlayerNumber(out PlayerNumber number)
+        {
+            var manager = PlayerManager.sSingleton;
+            if (manager != null && manager.pLocalPlayerNumbers != null && manager.pLocalPlayerNumbers.Count > 0)
+            {
+                number = manager.pLocalPlayerNumbers[0];
+                return true;
+            }
+            number = PlayerNumber.None;
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(CharacterSelect), nameof(CharacterSelect.GetIsPlayerLocal))]
+    internal static class CharacterSelect_GetIsPlayerLocal
+    {
+        private static void Postfix(CharacterSelect __instance, PlayerNumber player_number, ref bool __result)
+        {
+            if (__instance.pCurrentMode != CharacterSelect.Mode.Slave)
+            {
+                return;
+            }
+            var manager = PlayerManager.sSingleton;
+            if (manager?.pLocalPlayerNumbers != null)
+            {
+                __result = manager.pLocalPlayerNumbers.Contains(player_number);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(CharacterSelect), nameof(CharacterSelect.GetPlayerNumber))]
+    internal static class CharacterSelect_GetPlayerNumber
+    {
+        private static void Postfix(CharacterSelect __instance, ref PlayerNumber __result)
+        {
+            if (__instance.pCurrentMode == CharacterSelect.Mode.Slave
+                && CharacterSelectUtil.TryGetLocalPlayerNumber(out var local))
+            {
+                __result = local;
+            }
+        }
+    }
+
+    // Host may keep inviting while there is room.
+    [HarmonyPatch(typeof(CharacterSelect), nameof(CharacterSelect.CanInvite))]
+    internal static class CharacterSelect_CanInvite
+    {
+        private static void Postfix(CharacterSelect __instance, ref bool __result)
+        {
+            if (__result)
+            {
+                return;
+            }
+            var lobby = LobbyManager.sSingleton;
+            var mode = __instance.GetMode(PlayerManager.sSingleton.GetActiveCapsule());
+            if (mode == CharacterSelect.Mode.MasterOnlineCoop && lobby.pSlaveClientsCount < Plugin.MaxSlaves)
+            {
+                __result = true;
+            }
+        }
+    }
+
+    // Original only waits for P1 and P2.
+    [HarmonyPatch(typeof(CharacterSelect), "CheckAllPlayersReady")]
+    internal static class CharacterSelect_CheckAllPlayersReady
+    {
+        private static void Postfix(CharacterSelect __instance, ref bool __result)
+        {
+            if (!__result || __instance.pCurrentMode != CharacterSelect.Mode.MasterOnlineCoop)
+            {
+                return;
+            }
+            var capsule = PlayerManager.sSingleton.GetActiveCapsule();
+            for (int i = 0; i < capsule.pPlayers.Count; i++)
+            {
+                if (capsule.pPlayers[i].pCharacter == PlayerCharacterEnum.NO_ONE)
+                {
+                    __result = false;
+                    return;
+                }
+            }
+        }
+    }
+}
