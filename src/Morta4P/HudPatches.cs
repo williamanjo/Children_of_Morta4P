@@ -222,7 +222,43 @@ namespace Morta4P
 
             owners_[slot] = player;
             GetHud(slot).SetHUDEntity(MakeEntity(player));
+            if (pendingStatus_.TryGetValue(PlayerIndexOf(player), out var status))
+            {
+                GetHud(slot).SetStatus(status);
+            }
             Plugin.Log.LogInfo($"Online HUD slot {slot} -> {player.pAvatarData.pCharacter}");
+        }
+
+        // Last lobby status per player index, applied when that player's HUD gets a slot.
+        private static readonly Dictionary<int, string> pendingStatus_ = new Dictionary<int, string>();
+
+        internal static void SetStatus(int playerIndex, string text)
+        {
+            pendingStatus_[playerIndex] = text;
+            if (!EnsureOriginal())
+            {
+                return;
+            }
+            for (int i = 0; i < Slots; i++)
+            {
+                if (owners_[i] != null && !preview_[i] && PlayerIndexOf(owners_[i]) == playerIndex)
+                {
+                    GetHud(i).SetStatus(text);
+                    return;
+                }
+            }
+        }
+
+        private static int PlayerIndexOf(PlayerBase player)
+        {
+            try
+            {
+                return PlayerManager.sSingleton.GetPlayerIndex(player);
+            }
+            catch (System.Exception)
+            {
+                return -1;
+            }
         }
 
         internal static void Release(PlayerBase player)

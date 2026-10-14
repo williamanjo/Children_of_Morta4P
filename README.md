@@ -27,7 +27,7 @@ Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `
 
 1. O host entra no jogo e, na casa, convida os amigos pelo convite da Steam, **um de cada vez**.
 2. Todos escolhem personagem. A partida só começa quando os 4 tiverem escolhido.
-3. Todos precisam da **mesma versão do jogo e do mod**, e do mesmo `MaxPlayers` (veja abaixo).
+3. Todos precisam da **mesma versão do jogo e do mod**, e do mesmo `MaxPlayers` (veja abaixo). Quem estiver sem o mod pode ver status errados ou ter erro no lobby.
 
 ### Desinstalar
 
@@ -55,11 +55,11 @@ Com o **F9**, na seleção de personagem aparecem os 4 painéis e as marcações
 - **Lobby:** a Steam aceita 4 membros, e o jogo aceita até 3 convidados em vez de 1 (`CheckLobbyIsFull` e `CheckIsJoiningPossible`).
 - **Seleção de personagem:** cada convidado usa o número de jogador que o host atribuiu, em vez de ser sempre P2. O host pode continuar convidando enquanto houver vaga, e a partida espera todos escolherem. Com 3 ou mais jogadores, cada lado da tela mostra dois painéis: P1 em cima e P3 embaixo à esquerda, P2 em cima e P4 embaixo à direita.
 - **HUD:** cada jogador remoto ganha o próprio HUD de parceiro. No jogo original existia só um.
+- **Status do lobby:** "Pronto", "Escolhendo personagem", "Na masmorra" e os outros status aparecem no HUD do jogador certo. O host repassa o status de cada convidado para os demais, então todo mundo vê o status de todo mundo.
 - **Câmera:** sem mudança. No online, cada PC já segue só o próprio jogador.
 
 ## Limitações conhecidas
 
-- O status do lobby, como "Pronto" ou "Escolhendo personagem", não diz qual jogador enviou. Todos os status aparecem no primeiro HUD de parceiro.
 - O widget de lobby na casa mostra só o primeiro jogador remoto.
 - Revive, escalonamento de dificuldade e cutscenes não foram revisados para 4 jogadores.
 
