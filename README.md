@@ -1,56 +1,82 @@
-# Morta4P
+# Children of Morta 4P
 
-BepInEx plugin for Children of Morta that raises online co-op (Steam) from 2 to 4 players.
+Mod para **Children of Morta** (Steam) que aumenta o co-op online de 2 para **até 4 jogadores**.
 
-Status: **v0.1.0, experimental**. The lobby and character-select patches load, but no session with 3 or more players has been tested yet.
+Status: **v0.2.0, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
 
-## What v0.1 does
+## Instalação
 
-| Patch | Purpose |
-|---|---|
-| `SteamInterface.CreateLobby` | sets the Steam lobby member limit to `MaxPlayers` (the shipped prefab already uses 4) |
-| `LobbyManager.CheckLobbyIsFull` | accepts up to `MaxPlayers - 1` clients (original: 1) |
-| `LobbyManager.CheckIsJoiningPossible` | transpiler that replaces the inlined `GetCurrentPlayersCount() < 2` |
-| `CharacterSelect.GetPlayerNumber` / `GetIsPlayerLocal` | a client is the player number the host assigned, not always P2 |
-| `CharacterSelect.CanInvite` | host can keep inviting while there is room |
-| `CharacterSelect.CheckAllPlayersReady` | waits for every player to pick a character, not only P1 and P2 |
-| `CharacterSelect.GetCharacterPanel` | P3/P4 use hidden panels (the UI has only 2); on a client the local player uses the second panel |
+Faça isto **em todos os PCs** que vão jogar juntos.
 
-The camera needs no patch. Online, each PC already follows only its own local player (`LevelCameraManager` uses `PlayerManager.GetLocalPlayers()`).
+### 1. Instalar o BepInEx
 
-## Install (every player)
+1. Baixe o **BepInEx 5.4.23.x para Windows x64**, o arquivo `BepInEx_win_x64_5.4.23.x.zip`, na [página de releases do BepInEx](https://github.com/BepInEx/BepInEx/releases).
+2. Abra a pasta do jogo: na Steam, clique com o botão direito em Children of Morta → **Gerenciar** → **Navegar pelos arquivos locais**. Normalmente é `...\steamapps\common\ChildrenOfMorta`.
+3. Extraia o conteúdo do zip **dentro dessa pasta**, ao lado do `ChildrenOfMorta.exe`. Devem aparecer `winhttp.dll`, `doorstop_config.ini` e a pasta `BepInEx`.
+4. Abra o jogo uma vez e feche. Isso cria as pastas `BepInEx\plugins` e `BepInEx\config`.
 
-1. Install BepInEx 5.4.23.x win x64 in the game folder (`G:\Steam\steamapps\common\ChildrenOfMorta`).
-2. Copy `Morta4P.dll` to `BepInEx\plugins\Morta4P\`.
-3. Start the game through Steam. The plugin lines appear in `BepInEx\LogOutput.log`.
-4. Every player must use the same `MaxPlayers` value in `BepInEx\config\com.william.morta4p.cfg`.
+### 2. Instalar o mod
 
-## Build
+1. Baixe o `Morta4P.dll` da última versão em [Releases](../../releases).
+2. Crie a pasta `BepInEx\plugins\Morta4P\` dentro da pasta do jogo e coloque o `Morta4P.dll` nela.
+3. Abra o jogo pela Steam.
+
+Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.2.0 loaded. MaxPlayers=4`.
+
+### 3. Jogar
+
+1. O host entra no jogo e, na casa, convida os amigos pelo convite da Steam, **um de cada vez**.
+2. Todos escolhem personagem. A partida só começa quando os 4 tiverem escolhido.
+3. Todos precisam da **mesma versão do jogo e do mod**, e do mesmo `MaxPlayers` (veja abaixo).
+
+### Desinstalar
+
+- Para remover só o mod: apague `BepInEx\plugins\Morta4P`.
+- Para tirar tudo: apague também `winhttp.dll`, `doorstop_config.ini`, `.doorstop_version`, `changelog.txt` e a pasta `BepInEx`.
+
+## Configuração
+
+O arquivo `BepInEx\config\com.william.morta4p.cfg` é criado na primeira execução.
+
+| Seção | Opção | Padrão | O que faz |
+|---|---|---|---|
+| `General` | `MaxPlayers` | `4` | total de jogadores online, contando o host (2 a 4). Tem que ser igual em todos os PCs |
+| `CharacterSelect` | `PanelScale` | `0.5` | tamanho dos painéis de personagem quando há mais de 2 jogadores |
+| `CharacterSelect` | `PanelSpacing` | `4` | espaço entre o painel de cima e o de baixo |
+| `HUD` | `Spacing` | `14` | espaço entre os HUDs dos parceiros |
+| `HUD` | `StackDirection` | `Auto` | para onde os HUDs extras empilham: `Auto`, `Up`, `Down`, `Left` ou `Right` |
+| `Debug` | `PreviewKey` | `F9` | prévia solo do layout para 4 jogadores |
+| `Debug` | `ReloadKey` | `F10` | recarrega o arquivo de config sem fechar o jogo |
+
+Com o **F9**, na seleção de personagem aparecem os 4 painéis. Dentro de uma partida aparecem 3 HUDs de parceiro, todos com o seu personagem. Isso serve para ajustar o layout sem precisar de outros jogadores.
+
+## O que o mod muda
+
+- **Lobby:** a Steam aceita 4 membros, e o jogo aceita até 3 convidados em vez de 1 (`CheckLobbyIsFull` e `CheckIsJoiningPossible`).
+- **Seleção de personagem:** cada convidado usa o número de jogador que o host atribuiu, em vez de ser sempre P2. O host pode continuar convidando enquanto houver vaga, e a partida espera todos escolherem. Com 3 ou mais jogadores, cada lado da tela mostra dois painéis: P1 em cima e P3 embaixo à esquerda, P2 em cima e P4 embaixo à direita.
+- **HUD:** cada jogador remoto ganha o próprio HUD de parceiro. No jogo original existia só um.
+- **Câmera:** sem mudança. No online, cada PC já segue só o próprio jogador.
+
+## Limitações conhecidas
+
+- As marcações P3/P4 nos botões de personagem são a marcação do P2 recolorida (verde e laranja), não um texto "P3"/"P4".
+- O status do lobby, como "Pronto" ou "Escolhendo personagem", não diz qual jogador enviou. Todos os status aparecem no primeiro HUD de parceiro.
+- O widget de lobby na casa mostra só o primeiro jogador remoto.
+- Revive, escalonamento de dificuldade e cutscenes não foram revisados para 4 jogadores.
+
+## Reportar problema
+
+Se algo quebrar, abra uma issue anexando os dois logs do host e do jogador que teve o problema:
+
+- `BepInEx\LogOutput.log`, na pasta do jogo
+- `%USERPROFILE%\AppData\LocalLow\Dead Mage\Children of Morta\Player.log`
+
+## Compilar
+
+É preciso ter o .NET SDK 8 e o BepInEx instalado na pasta do jogo.
 
 ```bash
-dotnet build src/Morta4P/Morta4P.csproj -c Release
+dotnet build src/Morta4P/Morta4P.csproj -c Release -p:GamePath="C:\caminho\para\ChildrenOfMorta"
 ```
 
-`GamePath` defaults to `G:\Steam\steamapps\common\ChildrenOfMorta` (override with `-p:GamePath=...`). After the build, the DLL is copied into the game's `BepInEx\plugins\Morta4P`.
-
-## Testing a 3-4 player session
-
-1. The host opens the home screen and invites friends through Steam, one at a time.
-2. Note where it breaks: whether the join is rejected, whether character select works, whether the run starts, how the HUD looks.
-3. Send `BepInEx\LogOutput.log` from both the host and the client that failed.
-
-## v0.2: P3/P4 panels and partner HUDs
-
-- **Character select:** `character_panels_` is extended to 4 entries with clones of the P1/P2 panels. With 3 or more players in the lobby, each column is split: P1 above P3 on the left, P2 above P4 on the right, all scaled by `CharacterSelect.PanelScale` (default 0.5). With 2 players the original layout is untouched.
-- **Button markers:** each `CharacterButton` gets P3/P4 markers. The originals are images, not text, so P3 and P4 are tinted copies of the P2 marker (green and orange).
-- **Egg / cure-fatigue widgets:** these only exist for P1/P2, so they are skipped for P3/P4.
-- **Partner HUD:** `NetworkHUDManager` used a single `OnlinePlayerHUD` for the one remote player. Now each remote player gets its own HUD (clones of the original), stacked in `HUD.StackDirection` (Auto: down when the HUD is in the upper half of the screen).
-- **Debug:** `F9` toggles a solo preview. In character select it shows the 4-panel layout; in a run it fills the partner HUD slots with your own character. `F10` reloads the config so the layout can be tuned live.
-
-## Known gaps / next steps
-
-- The P3/P4 markers on the character buttons are recolored P2 markers, not real "P3"/"P4" labels.
-- The lobby status text (`MiniLobby`/`OnlinePlayerHUD.SetStatus`) has no sender information, so every remote status lands on the first partner HUD.
-- `MiniLobby` (home screen widget) shows only the first remote player.
-- `CharacterSelect` input handling still hard-codes P2 for clients in one spot (cancel button).
-- In-run systems (revive, scaling, cutscenes) have not been checked for 4 players.
+`GamePath` aponta para a pasta do jogo, onde ficam as DLLs de referência. Depois do build, o DLL é copiado automaticamente para `BepInEx\plugins\Morta4P`.
