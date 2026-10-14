@@ -17,6 +17,7 @@ namespace Morta4P
         internal static ConfigEntry<int> MaxPlayers;
         internal static ConfigEntry<float> PanelScale;
         internal static ConfigEntry<float> PanelSpacing;
+        internal static ConfigEntry<bool> UnlockStarterCharacters;
         internal static ConfigEntry<float> HudSpacing;
         internal static ConfigEntry<HudDirection> HudStackDirection;
         internal static ConfigEntry<float> LobbySpacing;
@@ -44,6 +45,8 @@ namespace Morta4P
                     new AcceptableValueRange<float>(0.3f, 1f)));
             PanelSpacing = settings_.Bind("CharacterSelect", "PanelSpacing", 4f,
                 "Vertical gap between a panel and the P3/P4 panel under it (UI units).");
+            UnlockStarterCharacters = settings_.Bind("CharacterSelect", "UnlockStarterCharacters", true,
+                "With 3 or more players online, John, Linda, Mark and Kevin can be picked even if the save has not unlocked them yet. The save itself is not changed.");
             HudSpacing = settings_.Bind("HUD", "Spacing", 14f,
                 "Gap between stacked partner HUDs (UI units).");
             HudStackDirection = settings_.Bind("HUD", "StackDirection", HudDirection.Auto,

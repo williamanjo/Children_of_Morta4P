@@ -42,6 +42,7 @@ O arquivo `BepInEx\config\morta4p.cfg` é criado na primeira execução. Se exis
 |---|---|---|---|
 | `General` | `MaxPlayers` | `4` | total de jogadores online, contando o host (2 a 4). Tem que ser igual em todos os PCs |
 | `CharacterSelect` | `PanelScale` | `0.5` | tamanho dos painéis de personagem quando há mais de 2 jogadores |
+| `CharacterSelect` | `UnlockStarterCharacters` | `true` | com 3 ou mais jogadores online, libera John, Linda, Mark e Kevin na seleção mesmo que o save não tenha desbloqueado. O save não é alterado |
 | `CharacterSelect` | `PanelSpacing` | `4` | espaço entre o painel de cima e o de baixo |
 | `HUD` | `Spacing` | `14` | espaço entre os HUDs dos parceiros |
 | `Lobby` | `Spacing` | `4` | espaço extra entre os jogadores no widget do lobby (menu de pausa) |
@@ -55,6 +56,7 @@ Com o **F9**, na seleção de personagem aparecem os 4 painéis e as marcações
 
 - **Lobby:** a Steam aceita 4 membros, e o jogo aceita até 3 convidados em vez de 1 (`CheckLobbyIsFull` e `CheckIsJoiningPossible`).
 - **Seleção de personagem:** cada convidado usa o número de jogador que o host atribuiu, em vez de ser sempre P2. O host pode continuar convidando enquanto houver vaga, e a partida espera todos escolherem. Com 3 ou mais jogadores, cada lado da tela mostra dois painéis: P1 em cima e P3 embaixo à esquerda, P2 em cima e P4 embaixo à direita.
+- **Personagens iniciais:** cada jogador precisa de um personagem diferente. Com 3 ou mais jogadores online, John, Linda, Mark e Kevin ficam liberados na seleção mesmo num save do começo da campanha. O desbloqueio da história continua acontecendo normalmente.
 - **HUD:** cada jogador remoto ganha o próprio HUD de parceiro. No jogo original existia só um.
 - **Status do lobby:** "Pronto", "Escolhendo personagem", "Na masmorra" e os outros status aparecem no HUD do jogador certo. O host repassa o status de cada convidado para os demais, então todo mundo vê o status de todo mundo.
 - **Widget do lobby (menu de pausa):** mostra todos os jogadores remotos, um embaixo do outro, cada um com status e submenu de perfil.

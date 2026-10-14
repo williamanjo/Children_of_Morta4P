@@ -77,7 +77,7 @@ namespace Morta4P
             {
                 return;
             }
-            Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(source.parent, source);
+            Bounds bounds = VisibleBounds(source);
             float step = Mathf.Max(bounds.size.y, source.rect.height * source.localScale.y) + Plugin.LobbySpacing.Value;
             for (int k = 0; k < Extras; k++)
             {
@@ -87,6 +87,42 @@ namespace Morta4P
                 }
             }
             Plugin.Log.LogInfo($"MiniLobby entry: rect={source.rect.size} bounds={bounds.size} step={step}");
+        }
+
+        private static readonly AccessTools.FieldRef<MiniLobbyPlayer, CanvasGroup> SubmenuField =
+            AccessTools.FieldRefAccess<MiniLobbyPlayer, CanvasGroup>("submenu_cg_");
+
+        // Bounds of the entry in its parent's space, skipping the profile/message submenu
+        // (hidden with alpha 0 but still laid out, and much taller than the entry).
+        private static Bounds VisibleBounds(RectTransform entry)
+        {
+            Transform submenu = SubmenuField(entry.GetComponent<MiniLobbyPlayer>())?.transform;
+            Transform space = entry.parent;
+            var corners = new Vector3[4];
+            bool any = false;
+            var bounds = new Bounds();
+            foreach (var rt in entry.GetComponentsInChildren<RectTransform>(true))
+            {
+                if (submenu != null && (rt == submenu || rt.IsChildOf(submenu)))
+                {
+                    continue;
+                }
+                rt.GetWorldCorners(corners);
+                foreach (var corner in corners)
+                {
+                    Vector3 local = space.InverseTransformPoint(corner);
+                    if (!any)
+                    {
+                        bounds = new Bounds(local, Vector3.zero);
+                        any = true;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(local);
+                    }
+                }
+            }
+            return bounds;
         }
 
         // Runs after MiniLobby.OnActiveCapsuleChanged, which already filled the first entry.
