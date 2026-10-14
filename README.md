@@ -29,6 +29,12 @@ Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `
 2. Todos escolhem personagem. A partida só começa quando os 4 tiverem escolhido.
 3. Todos precisam da **mesma versão do jogo e do mod**, e do mesmo `MaxPlayers` (veja abaixo). Quem estiver sem o mod pode ver status errados ou ter erro no lobby.
 
+> **Personagens desbloqueados:** cada jogador precisa de um personagem diferente; dois jogadores não podem usar o mesmo. A família tem até 8 personagens (John, Mark, Kevin, Linda, Lucy, Joey, Apon e Bec), mas eles são desbloqueados ao longo da campanha.
+>
+> - Com 3 ou mais jogadores online, o mod libera **John, Linda, Mark e Kevin** na seleção, mesmo que o save ainda não tenha desbloqueado. O save não é alterado, e a cena da história que desbloqueia cada um continua acontecendo normalmente. Para desligar, use a opção `UnlockStarterCharacters`.
+> - Os outros personagens (Lucy, Joey, Apon e Bec) só aparecem se já estiverem desbloqueados no save.
+> - Em algumas passagens da história, parte da família vira companheiro controlado pelo jogo e sai da lista de escolha. Para ter mais opções, prefira um save mais avançado na campanha.
+
 ### Desinstalar
 
 - Para remover só o mod: apague `BepInEx\plugins\Morta4P`.
