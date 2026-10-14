@@ -42,6 +42,7 @@ O arquivo `BepInEx\config\morta4p.cfg` é criado na primeira execução. Se exis
 |---|---|---|---|
 | `General` | `MaxPlayers` | `4` | total de jogadores online, contando o host (2 a 4). Tem que ser igual em todos os PCs |
 | `CharacterSelect` | `PanelScale` | `0.5` | tamanho dos painéis de personagem quando há mais de 2 jogadores |
+| `Gameplay` | `XPSplitMax` | `2` | a XP de cada inimigo é dividida pelo número de jogadores, até este limite, e cada um recebe a parte. Com `2`, 10 de XP dá 5 para cada um dos 4. `0` divide por todos (original) |
 | `CharacterSelect` | `UnlockStarterCharacters` | `true` | com 3 ou mais jogadores online, libera John, Linda, Mark e Kevin na seleção mesmo que o save não tenha desbloqueado. O save não é alterado |
 | `CharacterSelect` | `PanelSpacing` | `4` | espaço entre o painel de cima e o de baixo |
 | `HUD` | `Spacing` | `14` | espaço entre os HUDs dos parceiros |
@@ -56,6 +57,7 @@ Com o **F9**, na seleção de personagem aparecem os 4 painéis e as marcações
 
 - **Lobby:** a Steam aceita 4 membros, e o jogo aceita até 3 convidados em vez de 1 (`CheckLobbyIsFull` e `CheckIsJoiningPossible`).
 - **Seleção de personagem:** cada convidado usa o número de jogador que o host atribuiu, em vez de ser sempre P2. O host pode continuar convidando enquanto houver vaga, e a partida espera todos escolherem. Com 3 ou mais jogadores, cada lado da tela mostra dois painéis: P1 em cima e P3 embaixo à esquerda, P2 em cima e P4 embaixo à direita.
+- **XP:** a XP é dividida por 2 e cada jogador recebe a parte, mesmo com 3 ou 4 (10 de XP dá 5 para cada um). No jogo original, com 4, cada um ganharia só 2,5.
 - **Personagens iniciais:** cada jogador precisa de um personagem diferente. Com 3 ou mais jogadores online, John, Linda, Mark e Kevin ficam liberados na seleção mesmo num save do começo da campanha. O desbloqueio da história continua acontecendo normalmente.
 - **HUD:** cada jogador remoto ganha o próprio HUD de parceiro. No jogo original existia só um.
 - **Status do lobby:** "Pronto", "Escolhendo personagem", "Na masmorra" e os outros status aparecem no HUD do jogador certo. O host repassa o status de cada convidado para os demais, então todo mundo vê o status de todo mundo.
@@ -69,7 +71,7 @@ Com o **F9**, na seleção de personagem aparecem os 4 painéis e as marcações
 ## Limitações conhecidas
 
 - **Cutscenes:** as cenas foram animadas para 2 jogadores. P3 e P4 não têm papel nelas e podem ficar parados ou escondidos. Fora da cena, quem não é o "protagonista" pode aparecer no mesmo ponto que os outros.
-- **Dificuldade:** o jogo não aumenta inimigos nem vida por número de jogadores. Com 4, a dificuldade é a mesma do co-op de 2. No Endless, o co-op só liga um ajuste fixo. A XP é dividida entre todos, então com 4 cada um sobe de nível mais devagar.
+- **Dificuldade:** o jogo não aumenta inimigos nem vida por número de jogadores. Com 4, a dificuldade é a mesma do co-op de 2. No Endless, o co-op só liga um ajuste fixo.
 - **Companheiros controlados pelo jogo** (passagens, chefe final) usam o número de jogador P4 quando há 4 jogadores. O jogo original fecharia nesse caso.
 - **Fim de fase do chefe:** a cutscene de saída verifica só o jogador do host. Isso já era assim no jogo original.
 
