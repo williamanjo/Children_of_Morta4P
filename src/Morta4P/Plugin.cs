@@ -11,7 +11,7 @@ namespace Morta4P
     {
         public const string Guid = "com.william.morta4p";
         public const string Name = "Morta4P";
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
 
         internal static ManualLogSource Log;
         internal static ConfigEntry<int> MaxPlayers;
@@ -19,6 +19,7 @@ namespace Morta4P
         internal static ConfigEntry<float> PanelSpacing;
         internal static ConfigEntry<float> HudSpacing;
         internal static ConfigEntry<HudDirection> HudStackDirection;
+        internal static ConfigEntry<float> LobbySpacing;
         internal static ConfigEntry<KeyCode> PreviewKey;
         internal static ConfigEntry<KeyCode> ReloadKey;
 
@@ -46,8 +47,10 @@ namespace Morta4P
                 "Gap between stacked partner HUDs (UI units).");
             HudStackDirection = Config.Bind("HUD", "StackDirection", HudDirection.Auto,
                 "Where extra partner HUDs go relative to the first one. Auto: down if the HUD is in the upper half of the screen, otherwise up.");
+            LobbySpacing = Config.Bind("Lobby", "Spacing", 24f,
+                "Gap between player entries in the lobby widget of the pause menu (UI units).");
             PreviewKey = Config.Bind("Debug", "PreviewKey", KeyCode.F9,
-                "Toggles a solo preview of the P3/P4 panels (character select) and the partner HUDs (in a run).");
+                "Toggles a solo preview of the P3/P4 panels (character select), the partner HUDs (in a run) and the lobby widget (pause menu).");
             ReloadKey = Config.Bind("Debug", "ReloadKey", KeyCode.F10,
                 "Reloads this config file and re-applies the layout.");
 
@@ -77,6 +80,7 @@ namespace Morta4P
                 PanelLayout.Preview = !PanelLayout.Preview;
                 LayoutDirty = true;
                 HudStack.TogglePreview();
+                MiniLobbyWidget.TogglePreview();
                 Log.LogInfo($"Panel preview {(PanelLayout.Preview ? "on" : "off")}");
             }
 

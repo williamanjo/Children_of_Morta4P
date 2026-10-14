@@ -31,9 +31,6 @@ namespace Morta4P
             AccessTools.MethodDelegate<Func<MiniLobby, MiniLobby.LobbyStatusEnum, LocalizedText>>(
                 AccessTools.Method(typeof(MiniLobby), "GetLobbyStatusLocalizedText"));
 
-        private static readonly AccessTools.FieldRef<MiniLobby, MiniLobbyPlayer> OtherPlayerField =
-            AccessTools.FieldRefAccess<MiniLobby, MiniLobbyPlayer>("other_player_");
-
         internal static MiniLobby.LobbyStatusEnum Encode(MiniLobby.LobbyStatusEnum status, int playerIndex)
         {
             return (MiniLobby.LobbyStatusEnum)(((int)status & StatusMask) | ((playerIndex + 1) << IndexShift));
@@ -82,10 +79,10 @@ namespace Morta4P
             }
 
             HudStack.SetStatus(index, text.pText);
+            MiniLobbyWidget.SetStatus(lobby, index, text.ForceGetKey());
             if (index == FirstRemoteIndex())
             {
-                // Home-screen widgets only have room for one remote player.
-                OtherPlayerField(lobby)?.SetStatus(text.ForceGetKey());
+                // The online menu has a single status line; it follows the first remote player.
                 OnlineMenu.sSingleton?.SetStatus(text.pText);
             }
         }
