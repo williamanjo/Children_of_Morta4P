@@ -51,23 +51,42 @@ namespace Morta4P
             firstIndex_ = -1;
 
             var source = (RectTransform)original.transform;
-            bool autoLayout = source.parent != null && source.parent.GetComponent<LayoutGroup>() != null;
             for (int k = 0; k < Extras; k++)
             {
                 var go = UnityEngine.Object.Instantiate(original.gameObject, source.parent);
                 go.name = original.gameObject.name + "_Morta4P_" + (k + 2);
                 extra_[k] = go.GetComponent<MiniLobbyPlayer>();
                 extraIndex_[k] = -1;
-                if (!autoLayout)
-                {
-                    float h = source.rect.height * source.localScale.y;
-                    go.transform.localPosition = source.localPosition
-                        + new Vector3(0f, -(h + Plugin.LobbySpacing.Value) * (k + 1), 0f);
-                }
                 extra_[k].Show(show: false, is_joystick: false);
             }
-            Plugin.Log.LogInfo($"MiniLobby entry: pos={source.localPosition} size={source.rect.size} pivot={source.pivot} autoLayout={autoLayout}");
+            Place();
             return true;
+        }
+
+        // Stacks the extra entries under the original. The step uses the bounds of the whole
+        // entry including children (the avatar diamond sticks out of the 50-unit rect), so
+        // the diamonds do not overlap.
+        internal static void Place()
+        {
+            if (lobby_ == null || extra_[0] == null)
+            {
+                return;
+            }
+            var source = (RectTransform)OtherPlayerField(lobby_).transform;
+            if (source.parent == null || source.parent.GetComponent<LayoutGroup>() != null)
+            {
+                return;
+            }
+            Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(source.parent, source);
+            float step = Mathf.Max(bounds.size.y, source.rect.height * source.localScale.y) + Plugin.LobbySpacing.Value;
+            for (int k = 0; k < Extras; k++)
+            {
+                if (extra_[k] != null)
+                {
+                    extra_[k].transform.localPosition = source.localPosition + new Vector3(0f, -step * (k + 1), 0f);
+                }
+            }
+            Plugin.Log.LogInfo($"MiniLobby entry: rect={source.rect.size} bounds={bounds.size} step={step}");
         }
 
         // Runs after MiniLobby.OnActiveCapsuleChanged, which already filled the first entry.

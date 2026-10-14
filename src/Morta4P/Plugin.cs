@@ -11,7 +11,7 @@ namespace Morta4P
     {
         public const string Guid = "com.william.morta4p";
         public const string Name = "Morta4P";
-        public const string Version = "0.6.0";
+        public const string Version = "0.7.0";
 
         internal static ManualLogSource Log;
         internal static ConfigEntry<int> MaxPlayers;
@@ -48,7 +48,7 @@ namespace Morta4P
                 "Gap between stacked partner HUDs (UI units).");
             HudStackDirection = settings_.Bind("HUD", "StackDirection", HudDirection.Auto,
                 "Where extra partner HUDs go relative to the first one. Auto: down if the HUD is in the upper half of the screen, otherwise up.");
-            LobbySpacing = settings_.Bind("Lobby", "Spacing", 24f,
+            LobbySpacing = settings_.Bind("Lobby", "Spacing", 4f,
                 "Gap between player entries in the lobby widget of the pause menu (UI units).");
             PreviewKey = settings_.Bind("Debug", "PreviewKey", KeyCode.F9,
                 "Toggles a solo preview of the P3/P4 panels (character select), the partner HUDs (in a run) and the lobby widget (pause menu).");
@@ -99,6 +99,7 @@ namespace Morta4P
                 settings_.Reload();
                 LayoutDirty = true;
                 HudStack.Relayout();
+                MiniLobbyWidget.Place();
                 Log.LogInfo("Config reloaded");
             }
             if (Input.GetKeyDown(PreviewKey.Value))

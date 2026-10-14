@@ -2,7 +2,7 @@
 
 Mod para **Children of Morta** (Steam) que aumenta o co-op online de 2 para **até 4 jogadores**.
 
-Status: **v0.6.0, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
+Status: **v0.7.0, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
 
 ## Instalação
 
@@ -21,7 +21,7 @@ Faça isto **em todos os PCs** que vão jogar juntos.
 2. Crie a pasta `BepInEx\plugins\Morta4P\` dentro da pasta do jogo e coloque o `Morta4P.dll` nela.
 3. Abra o jogo pela Steam.
 
-Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.6.0 loaded. MaxPlayers=4`.
+Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.7.0 loaded. MaxPlayers=4`.
 
 ### 3. Jogar
 
@@ -44,7 +44,7 @@ O arquivo `BepInEx\config\morta4p.cfg` é criado na primeira execução. Se exis
 | `CharacterSelect` | `PanelScale` | `0.5` | tamanho dos painéis de personagem quando há mais de 2 jogadores |
 | `CharacterSelect` | `PanelSpacing` | `4` | espaço entre o painel de cima e o de baixo |
 | `HUD` | `Spacing` | `14` | espaço entre os HUDs dos parceiros |
-| `Lobby` | `Spacing` | `24` | espaço entre os jogadores no widget do lobby (menu de pausa) |
+| `Lobby` | `Spacing` | `4` | espaço extra entre os jogadores no widget do lobby (menu de pausa) |
 | `HUD` | `StackDirection` | `Auto` | para onde os HUDs extras empilham: `Auto`, `Up`, `Down`, `Left` ou `Right` |
 | `Debug` | `PreviewKey` | `F9` | prévia solo do layout para 4 jogadores |
 | `Debug` | `ReloadKey` | `F10` | recarrega o arquivo de config sem fechar o jogo |
@@ -58,11 +58,18 @@ Com o **F9**, na seleção de personagem aparecem os 4 painéis e as marcações
 - **HUD:** cada jogador remoto ganha o próprio HUD de parceiro. No jogo original existia só um.
 - **Status do lobby:** "Pronto", "Escolhendo personagem", "Na masmorra" e os outros status aparecem no HUD do jogador certo. O host repassa o status de cada convidado para os demais, então todo mundo vê o status de todo mundo.
 - **Widget do lobby (menu de pausa):** mostra todos os jogadores remotos, um embaixo do outro, cada um com status e submenu de perfil.
-- **Câmera:** sem mudança. No online, cada PC já segue só o próprio jogador.
+- **Câmera:** sem mudança. No online, cada PC já segue só o próprio jogador. O tremor de câmera também chega para P3 e P4.
+- **Revive:** todos os convidados veem o aviso de "reviver" e a seta de quem caiu, não só o host. Se o último jogador em pé sair da partida com o resto caído, a partida termina em vez de travar.
+- **Itens:** relíquias, consumíveis e runas que o jogo dava para "os dois jogadores" agora valem para os quatro. A loja de cura cura cada jogador em pé uma vez, em vez de curar o comprador várias vezes.
+- **Posições:** inícios de fase, passagens e esperas de cutscene que só tinham 2 posições ganham posições extras ao lado, em vez de fechar o jogo.
+- **Casa:** cada convidado recebe do host só os próprios dados de cutscene e animações da casa, sem duplicar.
 
 ## Limitações conhecidas
 
-- Revive, escalonamento de dificuldade e cutscenes não foram revisados para 4 jogadores.
+- **Cutscenes:** as cenas foram animadas para 2 jogadores. P3 e P4 não têm papel nelas e podem ficar parados ou escondidos. Fora da cena, quem não é o "protagonista" pode aparecer no mesmo ponto que os outros.
+- **Dificuldade:** o jogo não aumenta inimigos nem vida por número de jogadores. Com 4, a dificuldade é a mesma do co-op de 2. No Endless, o co-op só liga um ajuste fixo. A XP é dividida entre todos, então com 4 cada um sobe de nível mais devagar.
+- **Companheiros controlados pelo jogo** (passagens, chefe final) usam o número de jogador P4 quando há 4 jogadores. O jogo original fecharia nesse caso.
+- **Fim de fase do chefe:** a cutscene de saída verifica só o jogador do host. Isso já era assim no jogo original.
 
 ## Reportar problema
 
