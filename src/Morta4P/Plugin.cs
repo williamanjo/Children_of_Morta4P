@@ -11,7 +11,7 @@ namespace Morta4P
     {
         public const string Guid = "com.william.morta4p";
         public const string Name = "Morta4P";
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static ManualLogSource Log;
         internal static ConfigEntry<int> MaxPlayers;
@@ -61,6 +61,8 @@ namespace Morta4P
             Log.LogInfo($"{Name} {Version} loaded. MaxPlayers={MaxPlayers.Value}");
         }
 
+        private static bool updateErrorLogged_;
+
         private void Update()
         {
             if (Input.GetKeyDown(ReloadKey.Value))
@@ -78,7 +80,18 @@ namespace Morta4P
                 Log.LogInfo($"Panel preview {(PanelLayout.Preview ? "on" : "off")}");
             }
 
-            PanelLayout.Update();
+            try
+            {
+                PanelLayout.Update();
+            }
+            catch (System.Exception e)
+            {
+                if (!updateErrorLogged_)
+                {
+                    updateErrorLogged_ = true;
+                    Log.LogError($"Panel layout update: {e}");
+                }
+            }
             LayoutDirty = false;
         }
     }

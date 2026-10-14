@@ -330,8 +330,17 @@ namespace Morta4P
     {
         private static bool Prefix(PlayerBase player)
         {
-            HudStack.Init(player);
-            return false;
+            try
+            {
+                HudStack.Init(player);
+                return false;
+            }
+            catch (System.Exception e)
+            {
+                // Fall back to the game's single partner HUD.
+                Plugin.Log.LogError($"Partner HUD Init: {e}");
+                return true;
+            }
         }
     }
 
@@ -340,8 +349,17 @@ namespace Morta4P
     {
         private static bool Prefix(PlayerBase player)
         {
-            HudStack.Release(player);
-            return false;
+            try
+            {
+                HudStack.Release(player);
+                return false;
+            }
+            catch (System.Exception e)
+            {
+                // Fall back to the game's single partner HUD.
+                Plugin.Log.LogError($"Partner HUD Release: {e}");
+                return true;
+            }
         }
     }
 
@@ -350,7 +368,14 @@ namespace Morta4P
     {
         private static void Postfix(OnlinePlayerHUD __instance, bool show)
         {
-            HudStack.PropagateVisibility(__instance, show);
+            try
+            {
+                HudStack.PropagateVisibility(__instance, show);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogError($"Partner HUD visibility: {e}");
+            }
         }
     }
 }

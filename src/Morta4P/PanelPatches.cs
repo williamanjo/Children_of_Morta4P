@@ -41,6 +41,19 @@ namespace Morta4P
         // from every patch that may touch P3/P4. Returns true when four panels exist.
         internal static bool Ensure(CharacterSelect menu)
         {
+            try
+            {
+                return EnsureCore(menu);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogError($"P3/P4 panels for {menu?.name}: {e}");
+                return false;
+            }
+        }
+
+        private static bool EnsureCore(CharacterSelect menu)
+        {
             if (menu == null)
             {
                 return false;
@@ -83,9 +96,54 @@ namespace Morta4P
             return true;
         }
 
+        private static readonly List<GameObject> previewMarkers_ = new List<GameObject>();
+
+        // Preview: show a P3 and a P4 marker on two buttons of each visible menu.
+        private static void UpdateMarkerPreview()
+        {
+            if (!Preview)
+            {
+                foreach (var marker in previewMarkers_)
+                {
+                    if (marker != null)
+                    {
+                        marker.SetActive(false);
+                    }
+                }
+                previewMarkers_.Clear();
+                return;
+            }
+            if (previewMarkers_.Count > 0)
+            {
+                return;
+            }
+            var used = new Dictionary<CharacterSelect, int>();
+            foreach (var button in ButtonMarkers.Buttons)
+            {
+                var menu = button != null ? ButtonMarkers.GetMenu(button) : null;
+                if (menu == null || !menu.pIsShowing)
+                {
+                    continue;
+                }
+                used.TryGetValue(menu, out int count);
+                if (count >= 2)
+                {
+                    continue;
+                }
+                var marker = ButtonMarkers.GetMarker(button, 2 + count);
+                if (marker != null)
+                {
+                    marker.SetActive(true);
+                    previewMarkers_.Add(marker);
+                    used[menu] = count + 1;
+                }
+            }
+        }
+
         // Runs every frame from the plugin's MonoBehaviour.
         internal static void Update()
         {
+            UpdateMarkerPreview();
             for (int m = Menus.Count - 1; m >= 0; m--)
             {
                 var state = Menus[m];
@@ -236,6 +294,19 @@ namespace Morta4P
         // True when both the menu panels and this button's markers cover P3/P4.
         internal static bool Ensure(CharacterButton button)
         {
+            try
+            {
+                return EnsureCore(button);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogError($"P3/P4 markers for {button?.name}: {e}");
+                return false;
+            }
+        }
+
+        private static bool EnsureCore(CharacterButton button)
+        {
             bool panels = PanelLayout.Ensure(MenuField(button));
             GameObject[] texts = TextsField(button);
             if (texts != null && texts.Length >= 4)
@@ -250,48 +321,106 @@ namespace Morta4P
             var extended = new GameObject[4];
             texts.CopyTo(extended, 0);
             Vector3 step = texts[1].transform.localPosition - texts[0].transform.localPosition;
+            Sprite p1Sprite = texts[0].GetComponent<Image>()?.sprite;
             for (int i = texts.Length; i < 4; i++)
             {
-                var clone = Object.Instantiate(texts[1], texts[1].transform.parent);
-                clone.name = texts[1].name + "_P" + (i + 1);
+                // Clone the P1 marker: the generated sprite is drawn from its 27x32 layout.
+                var clone = Object.Instantiate(texts[0], texts[0].transform.parent);
+                clone.name = texts[0].name + "_P" + (i + 1);
                 clone.transform.localPosition = texts[1].transform.localPosition + step * (i - 1);
                 clone.SetActive(false);
-                SetLabel(clone, "P" + (i + 1), i == 2 ? Plugin.P3Color : Plugin.P4Color);
+
+                Sprite sprite = null;
+                try
+                {
+                    sprite = MarkerSprites.Get(i - 2, p1Sprite);
+                }
+                catch (System.Exception e)
+                {
+                    Plugin.Log.LogError($"P{i + 1} marker sprite: {e}");
+                }
+
+                var image = clone.GetComponent<Image>();
+                if (sprite != null && image != null)
+                {
+                    image.sprite = sprite;
+                }
+                else
+                {
+                    MakeTextMarker(clone, "P" + (i + 1), i == 2 ? Plugin.P3Color : Plugin.P4Color, FindFont(MenuField(button)));
+                }
                 extended[i] = clone;
             }
             TextsField(button) = extended;
+            Buttons.Add(button);
             return panels;
         }
 
-        private static bool loggedImageMarker_;
+        internal static readonly List<CharacterButton> Buttons = new List<CharacterButton>();
 
-        private static void SetLabel(GameObject go, string label, Color color)
+        internal static GameObject GetMarker(CharacterButton button, int index)
         {
-            bool labeled = false;
-            foreach (var text in go.GetComponentsInChildren<TMP_Text>(true))
+            GameObject[] texts = TextsField(button);
+            return texts != null && index < texts.Length ? texts[index] : null;
+        }
+
+        internal static CharacterSelect GetMenu(CharacterButton button) => MenuField(button);
+
+        private static TMP_FontAsset font_;
+
+        // Use the pixel font the menu already uses for its own labels.
+        private static TMP_FontAsset FindFont(CharacterSelect menu)
+        {
+            if (font_ != null)
             {
-                if (text is FText ftext)
+                return font_;
+            }
+            if (menu != null)
+            {
+                foreach (var text in menu.GetComponentsInChildren<TMP_Text>(true))
                 {
-                    ftext.clean_text = label;
+                    if (text.font != null)
+                    {
+                        font_ = text.font;
+                        Plugin.Log.LogInfo($"P3/P4 marker font: {font_.name} (from {text.name})");
+                        break;
+                    }
                 }
-                text.text = label;
-                labeled = true;
             }
-            foreach (var text in go.GetComponentsInChildren<Text>(true))
+            return font_;
+        }
+
+        // The P1/P2 markers are images with the label drawn in the sprite ("Player 01",
+        // "Player 2"). For P3/P4 the sprite is hidden and a text label is drawn instead.
+        private static void MakeTextMarker(GameObject marker, string label, Color color, TMP_FontAsset font)
+        {
+            foreach (var image in marker.GetComponents<Image>())
             {
-                text.text = label;
-                labeled = true;
+                image.enabled = false;
             }
-            // Image-based marker: tint so P3/P4 can at least be told apart from P2.
-            foreach (var graphic in go.GetComponentsInChildren<Graphic>(true))
+
+            var go = new GameObject("Label_" + label, typeof(RectTransform));
+            go.layer = marker.layer;
+            var rt = (RectTransform)go.transform;
+            rt.SetParent(marker.transform, false);
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(-6f, 0f);
+            rt.offsetMax = new Vector2(6f, 0f);
+
+            var text = go.AddComponent<TextMeshProUGUI>();
+            if (font != null)
             {
-                graphic.color = color;
+                text.font = font;
             }
-            if (!labeled && !loggedImageMarker_)
-            {
-                loggedImageMarker_ = true;
-                Plugin.Log.LogInfo($"Marker {go.name} is image-based; P3/P4 markers are tinted copies of P2");
-            }
+            text.text = label;
+            text.color = color;
+            text.alignment = TextAlignmentOptions.Center;
+            text.enableWordWrapping = false;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 6f;
+            text.fontSizeMax = 40f;
+            text.raycastTarget = false;
         }
     }
 

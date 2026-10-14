@@ -2,7 +2,7 @@
 
 Mod para **Children of Morta** (Steam) que aumenta o co-op online de 2 para **até 4 jogadores**.
 
-Status: **v0.2.0, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
+Status: **v0.3.0, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
 
 ## Instalação
 
@@ -21,7 +21,7 @@ Faça isto **em todos os PCs** que vão jogar juntos.
 2. Crie a pasta `BepInEx\plugins\Morta4P\` dentro da pasta do jogo e coloque o `Morta4P.dll` nela.
 3. Abra o jogo pela Steam.
 
-Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.2.0 loaded. MaxPlayers=4`.
+Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.3.0 loaded. MaxPlayers=4`.
 
 ### 3. Jogar
 
@@ -48,7 +48,7 @@ O arquivo `BepInEx\config\com.william.morta4p.cfg` é criado na primeira execuç
 | `Debug` | `PreviewKey` | `F9` | prévia solo do layout para 4 jogadores |
 | `Debug` | `ReloadKey` | `F10` | recarrega o arquivo de config sem fechar o jogo |
 
-Com o **F9**, na seleção de personagem aparecem os 4 painéis. Dentro de uma partida aparecem 3 HUDs de parceiro, todos com o seu personagem. Isso serve para ajustar o layout sem precisar de outros jogadores.
+Com o **F9**, na seleção de personagem aparecem os 4 painéis e as marcações P3/P4 em dois botões. Dentro de uma partida aparecem 3 HUDs de parceiro, todos com o seu personagem. Isso serve para ajustar o layout sem precisar de outros jogadores.
 
 ## O que o mod muda
 
@@ -59,7 +59,6 @@ Com o **F9**, na seleção de personagem aparecem os 4 painéis. Dentro de uma p
 
 ## Limitações conhecidas
 
-- As marcações P3/P4 nos botões de personagem são a marcação do P2 recolorida (verde e laranja), não um texto "P3"/"P4".
 - O status do lobby, como "Pronto" ou "Escolhendo personagem", não diz qual jogador enviou. Todos os status aparecem no primeiro HUD de parceiro.
 - O widget de lobby na casa mostra só o primeiro jogador remoto.
 - Revive, escalonamento de dificuldade e cutscenes não foram revisados para 4 jogadores.
