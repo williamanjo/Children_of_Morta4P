@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Reflection.Emit;
 using HarmonyLib;
 using UnityEngine;
 using Zyklus.Managers;
@@ -52,6 +54,47 @@ namespace Morta4P
             {
                 __result = local;
             }
+        }
+    }
+
+    // The cancel button handler picks the deselecting player with
+    // "current_mode_ != Mode.Slave ? P1 : P2", so a P3/P4 client would cancel P2's pick.
+    [HarmonyPatch(typeof(CharacterSelect), nameof(CharacterSelect.MenuActiveUpdateOncePerFrame))]
+    internal static class CharacterSelect_MenuActiveUpdateOncePerFrame
+    {
+        private static readonly System.Reflection.FieldInfo ModeField =
+            AccessTools.Field(typeof(CharacterSelect), "current_mode_");
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            int slave = (int)CharacterSelect.Mode.Slave;
+            int p2 = (int)PlayerNumber.P2;
+            for (int i = 0; i + 4 < codes.Count; i++)
+            {
+                // ldfld current_mode_ ; ldc.i4 Slave ; branch ; ldc.i4 P2 ...
+                if (!codes[i].LoadsField(ModeField) || !codes[i + 1].LoadsConstant(slave) || !codes[i + 2].Branches(out _))
+                {
+                    continue;
+                }
+                for (int j = i + 3; j < i + 6 && j < codes.Count; j++)
+                {
+                    if (codes[j].LoadsConstant(p2))
+                    {
+                        codes[j] = new CodeInstruction(OpCodes.Call,
+                            AccessTools.Method(typeof(CharacterSelect_MenuActiveUpdateOncePerFrame), nameof(SlavePlayerNumber)))
+                            .MoveLabelsFrom(codes[j]);
+                        return codes;
+                    }
+                }
+            }
+            Plugin.Log.LogError("MenuActiveUpdateOncePerFrame: P2 cancel literal not found, clients P3/P4 may cancel P2's pick");
+            return codes;
+        }
+
+        private static PlayerNumber SlavePlayerNumber()
+        {
+            return CharacterSelectUtil.TryGetLocalPlayerNumber(out var local) ? local : PlayerNumber.P2;
         }
     }
 

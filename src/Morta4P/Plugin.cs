@@ -11,7 +11,7 @@ namespace Morta4P
     {
         public const string Guid = "com.william.morta4p";
         public const string Name = "Morta4P";
-        public const string Version = "0.5.0";
+        public const string Version = "0.6.0";
 
         internal static ManualLogSource Log;
         internal static ConfigEntry<int> MaxPlayers;
@@ -35,23 +35,24 @@ namespace Morta4P
         private void Awake()
         {
             Log = Logger;
-            MaxPlayers = Config.Bind("General", "MaxPlayers", 4,
+            settings_ = OpenSettings();
+            MaxPlayers = settings_.Bind("General", "MaxPlayers", 4,
                 new ConfigDescription("Total online players including the host. Every player must use the same value.",
                     new AcceptableValueRange<int>(2, 4)));
-            PanelScale = Config.Bind("CharacterSelect", "PanelScale", 0.5f,
+            PanelScale = settings_.Bind("CharacterSelect", "PanelScale", 0.5f,
                 new ConfigDescription("Scale of the character panels when more than 2 players are in the lobby.",
                     new AcceptableValueRange<float>(0.3f, 1f)));
-            PanelSpacing = Config.Bind("CharacterSelect", "PanelSpacing", 4f,
+            PanelSpacing = settings_.Bind("CharacterSelect", "PanelSpacing", 4f,
                 "Vertical gap between a panel and the P3/P4 panel under it (UI units).");
-            HudSpacing = Config.Bind("HUD", "Spacing", 14f,
+            HudSpacing = settings_.Bind("HUD", "Spacing", 14f,
                 "Gap between stacked partner HUDs (UI units).");
-            HudStackDirection = Config.Bind("HUD", "StackDirection", HudDirection.Auto,
+            HudStackDirection = settings_.Bind("HUD", "StackDirection", HudDirection.Auto,
                 "Where extra partner HUDs go relative to the first one. Auto: down if the HUD is in the upper half of the screen, otherwise up.");
-            LobbySpacing = Config.Bind("Lobby", "Spacing", 24f,
+            LobbySpacing = settings_.Bind("Lobby", "Spacing", 24f,
                 "Gap between player entries in the lobby widget of the pause menu (UI units).");
-            PreviewKey = Config.Bind("Debug", "PreviewKey", KeyCode.F9,
+            PreviewKey = settings_.Bind("Debug", "PreviewKey", KeyCode.F9,
                 "Toggles a solo preview of the P3/P4 panels (character select), the partner HUDs (in a run) and the lobby widget (pause menu).");
-            ReloadKey = Config.Bind("Debug", "ReloadKey", KeyCode.F10,
+            ReloadKey = settings_.Bind("Debug", "ReloadKey", KeyCode.F10,
                 "Reloads this config file and re-applies the layout.");
 
             var harmony = new Harmony(Guid);
@@ -64,13 +65,38 @@ namespace Morta4P
             Log.LogInfo($"{Name} {Version} loaded. MaxPlayers={MaxPlayers.Value}");
         }
 
+        public const string SettingsFileName = "morta4p.cfg";
+
+        private ConfigFile settings_;
+
         private static bool updateErrorLogged_;
+
+        // Settings live in BepInEx\config\morta4p.cfg instead of the GUID-named default.
+        // A file from older versions is moved over so existing values are kept.
+        private ConfigFile OpenSettings()
+        {
+            string path = System.IO.Path.Combine(Paths.ConfigPath, SettingsFileName);
+            string legacy = System.IO.Path.Combine(Paths.ConfigPath, Guid + ".cfg");
+            try
+            {
+                if (!System.IO.File.Exists(path) && System.IO.File.Exists(legacy))
+                {
+                    System.IO.File.Move(legacy, path);
+                    Logger.LogInfo($"Moved {Guid}.cfg to {SettingsFileName}");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Logger.LogWarning($"Could not move old config: {e.Message}");
+            }
+            return new ConfigFile(path, saveOnInit: true, Info.Metadata);
+        }
 
         private void Update()
         {
             if (Input.GetKeyDown(ReloadKey.Value))
             {
-                Config.Reload();
+                settings_.Reload();
                 LayoutDirty = true;
                 HudStack.Relayout();
                 Log.LogInfo("Config reloaded");
