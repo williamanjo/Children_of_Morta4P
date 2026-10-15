@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Single-file installer: Morta4P.dll and the BepInEx zip are embedded as resources.
+       .NET Framework 4.7.2 ships with Windows 10/11, so players install nothing else. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>Morta4P-Installer</AssemblyName>
+    <RootNamespace>Morta4P.Installer</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Version>0.8.0</Version>
+    <Product>Children of Morta 4P</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <BepInExVersion>5.4.23.5</BepInExVersion>
+    <BepInExZip>$(MSBuildProjectDirectory)\obj\download\BepInEx_win_x64_$(BepInExVersion).zip</BepInExZip>
+    <PluginDll>$(MSBuildProjectDirectory)\..\Morta4P\bin\$(Configuration)\net472\Morta4P.dll</PluginDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <!-- Build the plugin first; only its DLL is embedded, nothing is referenced. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Morta4P\Morta4P.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PluginDll)" LogicalName="Morta4P.dll" />
+    <EmbeddedResource Include="$(BepInExZip)" LogicalName="BepInEx.zip" />
+  </ItemGroup>
+
+  <Target Name="FetchBepInEx" BeforeTargets="PrepareForBuild" Condition="!Exists('$(BepInExZip)')">
+    <DownloadFile
+      SourceUrl="https://github.com/BepInEx/BepInEx/releases/download/v$(BepInExVersion)/BepInEx_win_x64_$(BepInExVersion).zip"
+      DestinationFolder="$(MSBuildProjectDirectory)\obj\download" />
+  </Target>
+
+</Project>

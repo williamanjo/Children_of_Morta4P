@@ -8,14 +8,29 @@ Status: **v0.8.0, experimental**. A seleção de personagem e o HUD já foram te
 
 Faça isto **em todos os PCs** que vão jogar juntos.
 
-### 1. Instalar o BepInEx
+### Jeito fácil: instalador
+
+1. Feche o jogo.
+2. Baixe o `Morta4P-Installer.exe` da última versão em [Releases](../../releases).
+3. Execute. Ele procura o Children of Morta nas bibliotecas da Steam, instala o BepInEx (se ainda não tiver) e o mod.
+4. Escolha **[1] Instalar**. Para atualizar depois, é só baixar o instalador novo e rodar de novo.
+
+Observações:
+- O Windows pode mostrar "O Windows protegeu o computador", porque o instalador não tem assinatura digital. Clique em **Mais informações → Executar assim mesmo**.
+- Se ele não achar o jogo, cole o caminho da pasta do jogo quando ele pedir.
+- Se o jogo estiver numa pasta protegida, ele pede permissão de administrador.
+- A opção **[2] Desinstalar** remove o mod e, se você quiser, o BepInEx também.
+
+### Instalação manual
+
+#### 1. Instalar o BepInEx
 
 1. Baixe o **BepInEx 5.4.23.x para Windows x64**, o arquivo `BepInEx_win_x64_5.4.23.x.zip`, na [página de releases do BepInEx](https://github.com/BepInEx/BepInEx/releases).
 2. Abra a pasta do jogo: na Steam, clique com o botão direito em Children of Morta → **Gerenciar** → **Navegar pelos arquivos locais**. Normalmente é `...\steamapps\common\ChildrenOfMorta`.
 3. Extraia o conteúdo do zip **dentro dessa pasta**, ao lado do `ChildrenOfMorta.exe`. Devem aparecer `winhttp.dll`, `doorstop_config.ini` e a pasta `BepInEx`.
 4. Abra o jogo uma vez e feche. Isso cria as pastas `BepInEx\plugins` e `BepInEx\config`.
 
-### 2. Instalar o mod
+#### 2. Instalar o mod
 
 1. Baixe o `Morta4P.dll` da última versão em [Releases](../../releases).
 2. Crie a pasta `BepInEx\plugins\Morta4P\` dentro da pasta do jogo e coloque o `Morta4P.dll` nela.
@@ -23,7 +38,7 @@ Faça isto **em todos os PCs** que vão jogar juntos.
 
 Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.8.0 loaded. MaxPlayers=4`.
 
-### 3. Jogar
+### Jogar
 
 1. O host entra no jogo e, na casa, convida os amigos pelo convite da Steam, **um de cada vez**.
 2. Todos escolhem personagem. A partida só começa quando os 4 tiverem escolhido.
@@ -97,3 +112,11 @@ dotnet build src/Morta4P/Morta4P.csproj -c Release -p:GamePath="C:\caminho\para\
 ```
 
 `GamePath` aponta para a pasta do jogo, onde ficam as DLLs de referência. Depois do build, o DLL é copiado automaticamente para `BepInEx\plugins\Morta4P`.
+
+Para gerar o instalador (compila o mod e embute o DLL e o zip do BepInEx, baixado na primeira vez):
+
+```bash
+dotnet build src/Installer/Installer.csproj -c Release -p:GamePath="C:\caminho\para\ChildrenOfMorta"
+```
+
+O executável fica em `src/Installer/bin/Release/net472/Morta4P-Installer.exe`.
