@@ -20,9 +20,11 @@ namespace Morta4P
     // its stream stalled and the connection timed out (one client at random, as soon as a
     // second client started syncing).
     //
-    // Receiving: fragments were reassembled in one history keyed only by (tick, packet id).
-    // Clients sync their tick to the host, so two clients sent packets with the same key and
-    // their fragments were merged together or thrown away.
+    // Receiving: fragments were reassembled in one history keyed only by (tick, packet id),
+    // so two clients' packets with the same key were merged together or thrown away. Old
+    // unreliable packets were also dropped against one shared tick threshold, but every
+    // machine counts its own ticks: once a client with a higher tick joined, everything
+    // unreliable from a client with a lower tick was dropped and that client timed out.
     //
     // On the host with two or more clients, packets are now built per client and fragments
     // are reassembled per sender. Otherwise the original code runs unchanged.
@@ -173,18 +175,22 @@ namespace Morta4P
 
     // Fragment reassembly per sender. Instead of replacing Tick_Receiving (reflection on every
     // packet caused stutter on the host), the original loop runs unchanged: right after the
-    // transport hands over a packet, the service's two fragment histories are switched to the
-    // sender's own lists, so the original merge only ever sees that sender's fragments.
+    // transport hands over a packet, the service's two fragment histories and its receive
+    // tick threshold are switched to the sender's own, so the original code only ever sees
+    // that sender's packets.
     [HarmonyPatch(typeof(Altar.Steam.SteamTransportLayer), nameof(Altar.Steam.SteamTransportLayer.TryReceive))]
     internal static class SteamTransportLayer_TryReceive
     {
         private static readonly FieldInfo ReliableHistory = AccessTools.Field(typeof(TransportLobbyService), "reliable_fragment_history_");
         private static readonly FieldInfo NonReliableHistory = AccessTools.Field(typeof(TransportLobbyService), "non_reliable_fragment_history_");
+        private static readonly AccessTools.FieldRef<TransportLobbyService, uint> ThresholdField =
+            AccessTools.FieldRefAccess<TransportLobbyService, uint>("receive_tick_threshold_");
 
         private sealed class History
         {
             public object Reliable;
             public object NonReliable;
+            public uint Threshold;
         }
 
         private static readonly Dictionary<NetIdentityBase, History> histories_ = new Dictionary<NetIdentityBase, History>();
@@ -214,8 +220,14 @@ namespace Morta4P
                     Prune(result.pIdentity);
                 }
             }
+            ref uint threshold = ref ThresholdField(service);
+            if (current_ != null && histories_.TryGetValue(current_, out History previous))
+            {
+                previous.Threshold = threshold;
+            }
             ReliableHistory.SetValue(service, history.Reliable);
             NonReliableHistory.SetValue(service, history.NonReliable);
+            threshold = history.Threshold;
             current_ = result.pIdentity;
         }
 

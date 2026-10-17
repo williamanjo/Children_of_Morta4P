@@ -8,6 +8,8 @@ using Zyklus;
 using Zyklus.Managers;
 using Zyklus.Network;
 using Zyklus.Player;
+using Altar.Utilities;
+using Zyklus.Utilities;
 
 namespace Morta4P
 {
@@ -77,6 +79,22 @@ namespace Morta4P
         private static bool Prefix(LobbyManager __instance, NetCommand command)
         {
             EffectRelay.BroadcastCount++;
+            if (command is ReleaseNetCommand release && ClientAddress.Is(release.pAddress))
+            {
+                // Releasing a client's connection object (a client left): only that client has
+                // it. The address loses its identity once the client is gone, and writing it
+                // for the remaining clients threw every tick and left a hole in their command
+                // stream, freezing the game for everyone.
+                NetIdentityBase owner = release.pAddress.pSlaveIdentity;
+                foreach (SlaveClient slave in __instance.pSlaveClients.ToArray())
+                {
+                    if (slave != null && owner != null && slave.pID == owner)
+                    {
+                        slave.pGenericCommandService.QueueWaitForSendCommand(command);
+                    }
+                }
+                return false;
+            }
             NetIdentityBase excluded = ProjectileOwner.Excluded;
             if (excluded == null)
             {
@@ -88,6 +106,37 @@ namespace Morta4P
                 {
                     slave.pGenericCommandService.QueueWaitForSendCommand(command);
                 }
+            }
+            return false;
+        }
+    }
+
+    internal static class ClientAddress
+    {
+        internal static bool Is(NetGOAddress address) =>
+            address != null && (address.pMode == NetGOAddress.Mode.Client || address.pMode == NetGOAddress.Mode.ClientService);
+    }
+
+    // Last line of defence for the same case: an address whose client is already gone is
+    // written as a static object that does not exist. The receiver only logs "not found",
+    // instead of the host throwing in the middle of its send loop.
+    [HarmonyPatch(typeof(NetGOAddress), nameof(NetGOAddress.WriteToStream), new[] { typeof(System.IO.Stream), typeof(bool) })]
+    internal static class NetGOAddress_WriteToStream
+    {
+        private static bool Prefix(NetGOAddress __instance, System.IO.Stream stream, bool is_simple_dynamic_mode)
+        {
+            if (is_simple_dynamic_mode || !ClientAddress.Is(__instance) || __instance.pSlaveIdentity != null)
+            {
+                return true;
+            }
+            bool root = __instance.pChildIndex == byte.MaxValue;
+            int header = Altar.Utilities.SerializationUtility.BoolToBit(root, 0)
+                | Altar.Utilities.SerializationUtility.IntToBits((int)NetGOAddress.Mode.Static, 1, 3);
+            stream.WriteByte2((byte)header);
+            stream.WriteInt32(int.MinValue);
+            if (!root)
+            {
+                stream.WriteByte2(__instance.pChildIndex);
             }
             return false;
         }
