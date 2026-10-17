@@ -5,7 +5,7 @@
     <AssemblyName>Morta4P</AssemblyName>
     <RootNamespace>Morta4P</RootNamespace>
     <!-- Keep in sync with Plugin.Version; the installer reads this to compare versions. -->
-    <Version>0.9.10</Version>
+    <Version>0.9.11</Version>
     <LangVersion>latest</LangVersion>
     <!-- The game's RMC send helpers (IRMCBridgeExtensions.SendRMCTo*) are
          [Conditional("ZYKLUS_NETWORK")]; without this symbol every call to them is
