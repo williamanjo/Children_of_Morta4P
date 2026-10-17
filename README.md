@@ -2,7 +2,7 @@
 
 Mod para **Children of Morta** (Steam) que aumenta o co-op online de 2 para **até 4 jogadores**.
 
-Status: **v0.9.11, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
+Status: **v0.9.12, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
 
 ## Instalação
 
@@ -39,7 +39,7 @@ Observações:
 2. Crie a pasta `BepInEx\plugins\Morta4P\` dentro da pasta do jogo e coloque o `Morta4P.dll` nela.
 3. Abra o jogo pela Steam.
 
-Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.9.11 loaded. MaxPlayers=4`.
+Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.9.12 loaded. MaxPlayers=4`.
 
 ### Jogar
 
