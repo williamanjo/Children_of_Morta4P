@@ -8,7 +8,7 @@
     <AssemblyName>Morta4P-Installer</AssemblyName>
     <RootNamespace>Morta4P.Installer</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <Version>0.8.0</Version>
+    <Version>0.8.1</Version>
     <Product>Children of Morta 4P</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <BepInExVersion>5.4.23.5</BepInExVersion>
