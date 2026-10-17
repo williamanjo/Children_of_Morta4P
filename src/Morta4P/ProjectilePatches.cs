@@ -76,6 +76,7 @@ namespace Morta4P
     {
         private static bool Prefix(LobbyManager __instance, NetCommand command)
         {
+            EffectRelay.BroadcastCount++;
             NetIdentityBase excluded = ProjectileOwner.Excluded;
             if (excluded == null)
             {
