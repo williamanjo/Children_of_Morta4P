@@ -633,4 +633,21 @@ namespace Morta4P
             return max > 0 ? Mathf.Min(players.Count, max) : players.Count;
         }
     }
+
+    // A cutscene that never started on this machine (a client that was not part of the
+    // cutscene's start, e.g. the companion unlock sequence on a third player) is still
+    // finished when the floor is cleared. The original then calls RemoveOwner on its empty
+    // visibility lists and throws; that exception killed the scene clearing job, so the
+    // client never finished loading the next floor and everyone waited forever.
+    [HarmonyPatch(typeof(CutsceneInitializer), nameof(CutsceneInitializer.FinalizeEntitiesVisibilityState))]
+    internal static class CutsceneInitializer_FinalizeEntitiesVisibilityState
+    {
+        private static readonly FieldInfo EntitiesField = AccessTools.Field(typeof(CutsceneInitializer), "visibility_entities_");
+        private static readonly FieldInfo RuntimeEntitiesField = AccessTools.Field(typeof(CutsceneInitializer), "visibility_runtime_entities_");
+
+        private static bool Prefix(CutsceneInitializer __instance)
+        {
+            return EntitiesField.GetValue(__instance) != null && RuntimeEntitiesField.GetValue(__instance) != null;
+        }
+    }
 }

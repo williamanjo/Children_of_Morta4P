@@ -141,4 +141,27 @@ namespace Morta4P
             return false;
         }
     }
+
+    // Clients number networked objects with their own counter and expect it to match the id
+    // the host sent. Leaving the owner out of a projectile spawn (above) skipped a number on
+    // the owner, so every later object there got a different id than on the host: releases
+    // and RMCs hit the wrong object (picked-up items stayed on screen). On a client, take the
+    // host's id for every networked object instead of counting.
+    [HarmonyPatch(typeof(ZyklusUtility), nameof(ZyklusUtility.TryRegisteringNetGOInstance))]
+    internal static class ZyklusUtility_TryRegisteringNetGOInstance
+    {
+        private static readonly AccessTools.FieldRef<NetManager, ushort> LastIdField =
+            AccessTools.FieldRefAccess<NetManager, ushort>("last_assigned_instance_id_");
+
+        private static void Prefix(int net_instance_id)
+        {
+            LobbyManager lobby = LobbyManager.sSingleton;
+            if (lobby == null || !lobby.pIsSlave || net_instance_id < 1 || net_instance_id > ushort.MaxValue || NetManager.sSingleton == null)
+            {
+                return;
+            }
+            // The original then assigns last id + 1, which is the requested id.
+            LastIdField(NetManager.sSingleton) = (ushort)(net_instance_id - 1);
+        }
+    }
 }
