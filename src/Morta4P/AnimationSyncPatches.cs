@@ -86,26 +86,20 @@ namespace Morta4P
 
     // Same for the facing direction: FaceDirectionSyncerModule is send-enabled on the host
     // only for the host's own player, so other clients saw a client's player walk left
-    // while still facing right.
-    [HarmonyPatch(typeof(NetSyncerModule), nameof(NetSyncerModule.CheckIsSendEnabled))]
-    internal static class NetSyncerModule_CheckIsSendEnabled
+    // while still facing right. Enabled once per player when the run starts (clients only
+    // join at home, so the client count is fixed for the run).
+    [HarmonyPatch(typeof(PlayerBase), "Initialize_RunStart")]
+    internal static class PlayerBase_Initialize_RunStart_FaceDirection
     {
-        private static void Postfix(NetSyncerModule __instance, ref bool __result)
+        private static void Postfix(PlayerBase __instance)
         {
-            if (__result || !(__instance is FaceDirectionSyncerModule))
-            {
-                return;
-            }
             LobbyManager lobby = LobbyManager.sSingleton;
-            if (lobby == null || !lobby.pIsMaster || lobby.pSlaveClientsCount < 2 || !__instance.isActiveAndEnabled)
+            if (lobby == null || !lobby.pIsMaster || lobby.pSlaveClientsCount < 2
+                || __instance.pLocalNumber.GetIsLocal() || __instance.pIsCompanion || __instance.pFaceDirectionSyncer == null)
             {
                 return;
             }
-            PlayerBase player = AnimationSync.PlayerOf(__instance);
-            if (player != null && !player.pLocalNumber.GetIsLocal() && !player.pIsCompanion)
-            {
-                __result = true;
-            }
+            __instance.pFaceDirectionSyncer.pSendEnabled = true;
         }
     }
 

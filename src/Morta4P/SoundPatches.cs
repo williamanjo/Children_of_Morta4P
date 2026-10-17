@@ -20,6 +20,21 @@ namespace Morta4P
         private static readonly ConditionalWeakTable<ZyklusSoundEmitter, PlayerBase> owners_ =
             new ConditionalWeakTable<ZyklusSoundEmitter, PlayerBase>();
 
+        // GetLocalPlayers() allocates a new list; look it up at most once per frame.
+        private static PlayerBase local_;
+        private static int localFrame_ = -1;
+
+        private static PlayerBase LocalPlayer()
+        {
+            if (localFrame_ != UnityEngine.Time.frameCount || local_ == null)
+            {
+                localFrame_ = UnityEngine.Time.frameCount;
+                List<PlayerBase> locals = PlayerManager.sSingleton?.GetLocalPlayers();
+                local_ = locals != null && locals.Count > 0 ? locals[0] : null;
+            }
+            return local_;
+        }
+
         internal static bool ShouldMute(ZyklusSoundEmitter emitter, bool hasCallback)
         {
             float maxDistance = Plugin.OtherPlayerSoundDistance.Value;
@@ -42,12 +57,12 @@ namespace Morta4P
             {
                 return false;
             }
-            List<PlayerBase> locals = PlayerManager.sSingleton?.GetLocalPlayers();
-            if (locals == null || locals.Count == 0 || locals[0] == null)
+            PlayerBase local = LocalPlayer();
+            if (local == null)
             {
                 return false;
             }
-            Vector2 offset = (Vector2)(owner.transform.position - locals[0].transform.position);
+            Vector2 offset = (Vector2)(owner.transform.position - local.transform.position);
             return offset.sqrMagnitude > maxDistance * maxDistance;
         }
     }

@@ -212,11 +212,18 @@ namespace Morta4P
                 label.color = cloneIndex == 0 ? Plugin.P3Color : Plugin.P4Color;
             }
 
-            string current = label.text?.TrimEnd();
-            if (string.IsNullOrEmpty(current) || current[current.Length - 1] == target)
+            // Runs every frame while the panel is shown: check without allocating.
+            string raw = label.text;
+            int last = raw == null ? -1 : raw.Length - 1;
+            while (last >= 0 && char.IsWhiteSpace(raw[last]))
+            {
+                last--;
+            }
+            if (last < 0 || raw[last] == target)
             {
                 return;
             }
+            string current = raw.Substring(0, last + 1);
             string fixedText = current.Substring(0, current.Length - 1) + target;
             if (label is FText ftext)
             {
