@@ -80,7 +80,9 @@ namespace Morta4P
         {
             PlayerBase player = AnimationSync.PlayerOf(__instance);
             // A client's own player is animated locally; host data for it is a delayed echo.
-            return player == null || !player.pLocalNumber.GetIsLocal();
+            // Companions (Lucy) have the local number "Companion" everywhere but belong to
+            // the host, so their data must be applied.
+            return player == null || player.pIsCompanion || !player.pLocalNumber.GetIsLocal();
         }
     }
 
@@ -110,7 +112,7 @@ namespace Morta4P
         private static bool Prefix(FaceDirectionSyncerModule __instance)
         {
             PlayerBase player = AnimationSync.PlayerOf(__instance);
-            return player == null || !player.pLocalNumber.GetIsLocal();
+            return player == null || player.pIsCompanion || !player.pLocalNumber.GetIsLocal();
         }
     }
 }
