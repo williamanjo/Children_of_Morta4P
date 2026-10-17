@@ -171,24 +171,15 @@ namespace Morta4P
         }
     }
 
-    [HarmonyPatch(typeof(TransportLobbyService), nameof(TransportLobbyService.Tick_Receiving))]
-    internal static class TransportLobbyService_Tick_Receiving
+    // Fragment reassembly per sender. Instead of replacing Tick_Receiving (reflection on every
+    // packet caused stutter on the host), the original loop runs unchanged: right after the
+    // transport hands over a packet, the service's two fragment histories are switched to the
+    // sender's own lists, so the original merge only ever sees that sender's fragments.
+    [HarmonyPatch(typeof(Altar.Steam.SteamTransportLayer), nameof(Altar.Steam.SteamTransportLayer.TryReceive))]
+    internal static class SteamTransportLayer_TryReceive
     {
-        private const int HandleOwner = -100;
-        private const int FragmentOwner = 43921786;
-        private const int MergedOwner = 36981692;
-
         private static readonly FieldInfo ReliableHistory = AccessTools.Field(typeof(TransportLobbyService), "reliable_fragment_history_");
         private static readonly FieldInfo NonReliableHistory = AccessTools.Field(typeof(TransportLobbyService), "non_reliable_fragment_history_");
-        private static readonly AccessTools.FieldRef<TransportLobbyService, uint> ThresholdField =
-            AccessTools.FieldRefAccess<TransportLobbyService, uint>("receive_tick_threshold_");
-
-        private static readonly MethodInfo AcquireItem = AccessTools.Method(typeof(TransportLobbyService), "AcquireFragmentHistoryItem");
-        private static readonly MethodInfo Record = AccessTools.Method(typeof(TransportLobbyService), "RecordFragmentInHistory");
-        private static readonly MethodInfo TryMerge = AccessTools.Method(typeof(TransportLobbyService), "TryMergeFragments");
-        private static readonly MethodInfo HandleBuffer = AccessTools.Method(typeof(TransportLobbyService), "HandleBuffer");
-        private static readonly MethodInfo RemoveFromHistory = AccessTools.Method(typeof(TransportLobbyService), "RemoveFromHistory");
-        private static readonly MethodInfo RemoveOlder = AccessTools.Method(typeof(TransportLobbyService), "RemoveNonReliableHistoryOlderThan");
 
         private sealed class History
         {
@@ -197,119 +188,43 @@ namespace Morta4P
         }
 
         private static readonly Dictionary<NetIdentityBase, History> histories_ = new Dictionary<NetIdentityBase, History>();
+        private static NetIdentityBase current_;
 
-        private static History HistoryOf(NetIdentityBase sender)
+        private static void Postfix(bool __result, NetBufferHandle result)
         {
-            if (!histories_.TryGetValue(sender, out History history))
+            if (!__result || result?.pIdentity == null || result.pIdentity == current_ || !Transport.IsMultiClientHost())
+            {
+                return;
+            }
+            TransportLobbyService service = LobbyManager.sSingleton.pTransportQueueService;
+            if (service == null)
+            {
+                return;
+            }
+            if (!histories_.TryGetValue(result.pIdentity, out History history))
             {
                 history = new History
                 {
                     Reliable = Activator.CreateInstance(ReliableHistory.FieldType),
                     NonReliable = Activator.CreateInstance(NonReliableHistory.FieldType),
                 };
-                histories_[sender] = history;
-            }
-            return history;
-        }
-
-        private static bool Prefix(TransportLobbyService __instance)
-        {
-            if (!Transport.IsMultiClientHost())
-            {
-                return true;
-            }
-
-            object originalReliable = ReliableHistory.GetValue(__instance);
-            object originalNonReliable = NonReliableHistory.GetValue(__instance);
-            try
-            {
-                while (NetManager.sTransportLayer.TryReceive(out NetBufferHandle result, HandleOwner))
+                histories_[result.pIdentity] = history;
+                if (histories_.Count > 8)
                 {
-                    if (result == null)
-                    {
-                        continue;
-                    }
-                    try
-                    {
-                        Receive(__instance, result);
-                    }
-                    finally
-                    {
-                        result.RemoveOwner(HandleOwner);
-                    }
+                    Prune(result.pIdentity);
                 }
             }
-            finally
-            {
-                ReliableHistory.SetValue(__instance, originalReliable);
-                NonReliableHistory.SetValue(__instance, originalNonReliable);
-            }
-            PruneDisconnected();
-            return false;
-        }
-
-        private static void Receive(TransportLobbyService service, NetBufferHandle result)
-        {
-            if (!result.pBuffer.ReadZyklusHeader(out byte session_id, out SendMode send_mode, out uint tick_id,
-                    out byte packet_id, out ushort fragment_count, out ushort index))
-            {
-                UnityEngine.Debug.LogError("Invalid buffer received! buffer=" + result);
-                return;
-            }
-
-            ref uint threshold = ref ThresholdField(service);
-            uint candidate = NetworkUtility.SeekUIntID(tick_id, -60);
-            bool raised = NetworkUtility.CompareUIntID(candidate, threshold) > 0;
-            if (raised)
-            {
-                threshold = candidate;
-            }
-            bool reliable = send_mode.IsReliable();
-            if (!reliable && NetworkUtility.CompareUIntID(tick_id, threshold) < 0)
-            {
-                return;
-            }
-            byte lobbySession = LobbyManager.sSingleton.pSessionID;
-            if (session_id != 0 && lobbySession != 0 && lobbySession != session_id)
-            {
-                return;
-            }
-
-            // Reassemble with this sender's own fragment history.
-            History history = HistoryOf(result.pIdentity);
             ReliableHistory.SetValue(service, history.Reliable);
             NonReliableHistory.SetValue(service, history.NonReliable);
-
-            int size = (int)(result.pBuffer.Length - ZyklusNetworkUtility.GetZyklusHeaderSize());
-            object fragment = AcquireItem.Invoke(null, new object[] { FragmentOwner, send_mode, tick_id, (int)packet_id, (int)index, result.pBuffer, size });
-            Record.Invoke(service, new object[] { reliable, fragment });
-
-            var mergeArgs = new object[] { MergedOwner, null, reliable, fragment_count, tick_id, packet_id };
-            if ((bool)TryMerge.Invoke(service, mergeArgs))
-            {
-                var merged = (ByteBuffer)mergeArgs[1];
-                merged.SeekToBegin();
-                HandleBuffer.Invoke(service, new object[] { merged, result.pIdentity, tick_id });
-                RemoveFromHistory.Invoke(service, new object[] { reliable, tick_id, (int)packet_id });
-                merged.RemoveOwner(MergedOwner);
-            }
-            if (!reliable && raised)
-            {
-                RemoveOlder.Invoke(service, new object[] { threshold });
-            }
+            current_ = result.pIdentity;
         }
 
-        // Forget histories of peers that left (their pooled fragments are simply dropped).
-        private static void PruneDisconnected()
+        private static void Prune(NetIdentityBase keep)
         {
-            if (histories_.Count <= LobbyManager.sSingleton.pAllClientsIdentity.Count)
-            {
-                return;
-            }
             var stale = new List<NetIdentityBase>();
             foreach (NetIdentityBase sender in histories_.Keys)
             {
-                if (!LobbyManager.sSingleton.pAllClientsIdentity.Contains(sender))
+                if (sender != keep && !LobbyManager.sSingleton.pAllClientsIdentity.Contains(sender))
                 {
                     stale.Add(sender);
                 }
