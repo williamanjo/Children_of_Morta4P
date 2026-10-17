@@ -347,4 +347,94 @@ namespace Morta4P
             return LobbyManager.sSingleton.pMasterIdentity;
         }
     }
+
+    // --- Trainman asset bundles ------------------------------------------------------
+
+    // A client asks the host which bundles to load; the host answered with a broadcast, so
+    // the other clients (not asking) ran a null callback and threw. Reply to the asker only,
+    // and ignore an answer nobody waits for.
+    [HarmonyPatch(typeof(ZyklusAssetBundleManager), "SendMasterTrainmanRequiredBundles")]
+    internal static class ZyklusAssetBundleManager_SendMasterTrainmanRequiredBundles
+    {
+        private static readonly FieldInfo CallbackField = AccessTools.Field(typeof(ZyklusAssetBundleManager), "fetch_done_callback_");
+
+        private static bool Prefix(ZyklusAssetBundleManager __instance, List<ZyklusAssetBundles> bundles)
+        {
+            LobbyManager lobby = LobbyManager.sSingleton;
+            if (lobby.pIsMaster)
+            {
+                NetIdentityBase requester = LobbyStatus.CurrentSender?.pID;
+                if (requester == null)
+                {
+                    return true;
+                }
+                __instance.pRMCBridge.SendRMCToSlave(requester, RMCHandler.ErrorCondition.All, __instance, 2, bundles);
+                return false;
+            }
+            // Client: only handle the answer if this client asked.
+            return CallbackField.GetValue(__instance) != null;
+        }
+    }
+
+    // --- Host save buffer on a client ------------------------------------------------
+
+    // The host's save copy can be announced before its bulk data finished downloading
+    // ("No downloaded bulk found"). Wait for it for a few seconds instead of throwing.
+    [HarmonyPatch(typeof(ProfileManager), "FetchingHostSaveBufferDone")]
+    internal static class ProfileManager_FetchingHostSaveBufferDone
+    {
+        private const float WaitSeconds = 15f;
+
+        private static readonly AccessTools.FieldRef<BulkClientService, Dictionary<ushort, byte[]>> DownloadedField =
+            AccessTools.FieldRefAccess<BulkClientService, Dictionary<ushort, byte[]>>("downloaded_bulks_");
+
+        private static readonly List<KeyValuePair<ushort, float>> pending_ = new List<KeyValuePair<ushort, float>>();
+
+        private static bool Prefix(ushort bulk_id)
+        {
+            LobbyManager lobby = LobbyManager.sSingleton;
+            if (lobby.pIsMaster)
+            {
+                return true;
+            }
+            if (TryApply(bulk_id))
+            {
+                return false;
+            }
+            Plugin.Log.LogInfo($"Host save buffer {bulk_id} not downloaded yet; waiting");
+            pending_.Add(new KeyValuePair<ushort, float>(bulk_id, UnityEngine.Time.realtimeSinceStartup + WaitSeconds));
+            return false;
+        }
+
+        // Called every frame by the plugin.
+        internal static void Update()
+        {
+            for (int i = pending_.Count - 1; i >= 0; i--)
+            {
+                var entry = pending_[i];
+                if (TryApply(entry.Key))
+                {
+                    pending_.RemoveAt(i);
+                }
+                else if (UnityEngine.Time.realtimeSinceStartup > entry.Value)
+                {
+                    Plugin.Log.LogWarning($"Host save buffer {entry.Key} never arrived; keeping the previous copy");
+                    pending_.RemoveAt(i);
+                }
+            }
+        }
+
+        private static bool TryApply(ushort bulk_id)
+        {
+            BulkClientService bulk = LobbyManager.sSingleton?.pMasterClient?.pBulkService;
+            if (bulk == null || !DownloadedField(bulk).ContainsKey(bulk_id))
+            {
+                return false;
+            }
+            byte[] buffer = bulk.PopBulk(bulk_id);
+            ProfileManager manager = ProfileManager.sSingleton;
+            manager.QueueSaveJob(SaveDataType.Profile, buffer, manager.pSelectedProfileSlotID, null);
+            return true;
+        }
+    }
 }
