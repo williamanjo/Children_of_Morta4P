@@ -87,8 +87,9 @@ namespace Morta4P
     // Same for the facing direction: FaceDirectionSyncerModule is send-enabled on the host
     // only for the host's own player, so other clients saw a client's player walk left
     // while still facing right. Enabled once per player when the run starts (clients only
-    // join at home, so the client count is fixed for the run).
-    [HarmonyPatch(typeof(PlayerBase), "Initialize_RunStart")]
+    // join at home, so the client count is fixed for the run). Initialize_RunStart has
+    // overloads; Initialize_RunStart2 is where all of them end, after the game set the flag.
+    [HarmonyPatch(typeof(PlayerBase), "Initialize_RunStart2")]
     internal static class PlayerBase_Initialize_RunStart_FaceDirection
     {
         private static void Postfix(PlayerBase __instance)
