@@ -11,7 +11,7 @@ namespace Morta4P
     {
         public const string Guid = "com.william.morta4p";
         public const string Name = "Morta4P";
-        public const string Version = "0.8.1";
+        public const string Version = "0.9.0";
 
         internal static ManualLogSource Log;
         internal static ConfigEntry<int> MaxPlayers;
@@ -62,7 +62,25 @@ namespace Morta4P
                 "Reloads this config file and re-applies the layout.");
 
             var harmony = new Harmony(Guid);
-            harmony.PatchAll(typeof(Plugin).Assembly);
+            // Patch class by class so one failing patch (e.g. after a game update) only
+            // disables that fix instead of the whole mod.
+            int failed = 0;
+            foreach (var type in AccessTools.GetTypesFromAssembly(typeof(Plugin).Assembly))
+            {
+                try
+                {
+                    harmony.CreateClassProcessor(type).Patch();
+                }
+                catch (System.Exception e)
+                {
+                    failed++;
+                    Log.LogError($"Patch {type.Name} failed: {e.InnerException?.Message ?? e.Message}");
+                }
+            }
+            if (failed > 0)
+            {
+                Log.LogError($"{failed} patch(es) failed; the rest of the mod is active");
+            }
 
             foreach (var method in harmony.GetPatchedMethods())
             {

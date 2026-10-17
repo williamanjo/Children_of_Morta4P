@@ -61,9 +61,13 @@ namespace Morta4P.Installer
                     {
                         Uninstall(gamePath);
                     }
+                    else if (action == "update")
+                    {
+                        Update(gamePath);
+                    }
                     else
                     {
-                        Install(gamePath, version);
+                        Install(gamePath);
                     }
                 }
                 catch (UnauthorizedAccessException)
@@ -191,12 +195,16 @@ namespace Morta4P.Installer
 
         private static string AskAction(string gamePath)
         {
-            bool installed = File.Exists(Path.Combine(gamePath, PluginFolder, "Morta4P.dll"));
-            Console.WriteLine(installed ? "O mod já está instalado." : "O mod ainda não está instalado.");
+            string dll = Path.Combine(gamePath, PluginFolder, "Morta4P.dll");
+            Version installed = InstalledVersion(dll);
+            Console.WriteLine(installed != null
+                ? $"Mod instalado: v{installed.ToString(3)}"
+                : File.Exists(dll) ? "Mod instalado (versão 0.8.1 ou anterior)." : "O mod ainda não está instalado.");
             Console.WriteLine();
-            Console.WriteLine(installed ? "  [1] Atualizar o mod" : "  [1] Instalar o mod");
-            Console.WriteLine("  [2] Desinstalar o mod");
-            Console.WriteLine("  [3] Sair");
+            Console.WriteLine("  [1] Instalar (BepInEx + mod mais recente)");
+            Console.WriteLine("  [2] Atualizar mod (baixa a versão mais recente)");
+            Console.WriteLine("  [3] Desinstalar o mod");
+            Console.WriteLine("  [4] Sair");
             while (true)
             {
                 Console.Write("> ");
@@ -205,12 +213,32 @@ namespace Morta4P.Installer
                     case "1":
                         return "install";
                     case "2":
-                        return "uninstall";
+                        return "update";
                     case "3":
+                        return "uninstall";
+                    case "4":
                     case "":
                     case null:
                         return null;
                 }
+            }
+        }
+
+        private static Version InstalledVersion(string dll)
+        {
+            try
+            {
+                if (!File.Exists(dll))
+                {
+                    return null;
+                }
+                Version version = AssemblyName.GetAssemblyName(dll).Version;
+                // Builds up to 0.8.1 had no assembly version (1.0.0.0 by default).
+                return version == new Version(1, 0, 0, 0) ? null : version;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
@@ -220,53 +248,122 @@ namespace Morta4P.Installer
             {
                 Console.WriteLine();
                 Console.WriteLine("O Children of Morta está aberto. Feche o jogo e aperte Enter para continuar.");
-                Console.ReadLine();
+                if (Console.ReadLine() == null)
+                {
+                    throw new InvalidOperationException("O jogo continua aberto. Feche o jogo e rode o instalador de novo.");
+                }
             }
         }
 
-        private static void Install(string gamePath, string version)
+        private static void Install(string gamePath)
         {
             Console.WriteLine();
+            InstallBepInEx(gamePath);
+            InstallPlugin(gamePath);
+        }
+
+        private static void Update(string gamePath)
+        {
+            Console.WriteLine();
+            if (!File.Exists(Path.Combine(gamePath, @"BepInEx\core\BepInEx.dll")))
+            {
+                Console.WriteLine("O BepInEx não está instalado; instalando junto.");
+                InstallBepInEx(gamePath);
+            }
+            InstallPlugin(gamePath);
+        }
+
+        private static void InstallBepInEx(string gamePath)
+        {
             if (File.Exists(Path.Combine(gamePath, @"BepInEx\core\BepInEx.dll")) && File.Exists(Path.Combine(gamePath, "winhttp.dll")))
             {
                 Console.WriteLine("BepInEx já está instalado.");
+                return;
+            }
+            Console.WriteLine("Instalando o BepInEx...");
+            using (Stream zipStream = Resource("BepInEx.zip"))
+            using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+            {
+                foreach (ZipArchiveEntry entry in zip.Entries)
+                {
+                    string target = Path.GetFullPath(Path.Combine(gamePath, entry.FullName));
+                    if (!target.StartsWith(Path.GetFullPath(gamePath), StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                    if (string.IsNullOrEmpty(entry.Name))
+                    {
+                        Directory.CreateDirectory(target);
+                        continue;
+                    }
+                    Directory.CreateDirectory(Path.GetDirectoryName(target));
+                    entry.ExtractToFile(target, overwrite: true);
+                }
+            }
+        }
+
+        // Downloads Morta4P.dll from the newest GitHub release; falls back to the copy
+        // embedded in this installer when offline.
+        private static void InstallPlugin(string gamePath)
+        {
+            string pluginDir = Path.Combine(gamePath, PluginFolder);
+            string target = Path.Combine(pluginDir, "Morta4P.dll");
+            Version before = InstalledVersion(target);
+            byte[] previous = File.Exists(target) ? File.ReadAllBytes(target) : null;
+
+            byte[] dll = null;
+            string source;
+            Console.WriteLine("Procurando a versão mais recente do mod no GitHub...");
+            try
+            {
+                var latest = Releases.FindLatest();
+                if (latest != null)
+                {
+                    Console.WriteLine($"Baixando o Morta4P {latest.Tag}...");
+                    dll = Releases.Download(latest.DllUrl);
+                    source = latest.Tag;
+                }
+                else
+                {
+                    source = null;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Não consegui baixar do GitHub: " + e.Message);
+                source = null;
+            }
+            if (dll == null)
+            {
+                using (Stream embedded = Resource("Morta4P.dll"))
+                using (var memory = new MemoryStream())
+                {
+                    embedded.CopyTo(memory);
+                    dll = memory.ToArray();
+                }
+                source = "v" + Assembly.GetExecutingAssembly().GetName().Version.ToString(3) + " (embutida no instalador)";
+                Console.WriteLine("Usando a versão embutida no instalador.");
+            }
+
+            Directory.CreateDirectory(pluginDir);
+            File.WriteAllBytes(target, dll);
+
+            Console.WriteLine();
+            if (previous != null && previous.SequenceEqual(dll))
+            {
+                Console.WriteLine($"O mod já estava na versão mais recente ({source}).");
+            }
+            else if (previous != null)
+            {
+                string from = before != null ? "v" + before.ToString(3) : "versão antiga";
+                Console.WriteLine($"Mod atualizado: {from} -> {source}.");
             }
             else
             {
-                Console.WriteLine("Instalando o BepInEx...");
-                using (Stream zipStream = Resource("BepInEx.zip"))
-                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
-                {
-                    foreach (ZipArchiveEntry entry in zip.Entries)
-                    {
-                        string target = Path.GetFullPath(Path.Combine(gamePath, entry.FullName));
-                        if (!target.StartsWith(Path.GetFullPath(gamePath), StringComparison.OrdinalIgnoreCase))
-                        {
-                            continue;
-                        }
-                        if (string.IsNullOrEmpty(entry.Name))
-                        {
-                            Directory.CreateDirectory(target);
-                            continue;
-                        }
-                        Directory.CreateDirectory(Path.GetDirectoryName(target));
-                        entry.ExtractToFile(target, overwrite: true);
-                    }
-                }
+                Console.WriteLine($"Mod instalado: {source}.");
             }
-
-            Console.WriteLine($"Instalando o Morta4P v{version}...");
-            string pluginDir = Path.Combine(gamePath, PluginFolder);
-            Directory.CreateDirectory(pluginDir);
-            using (Stream dll = Resource("Morta4P.dll"))
-            using (FileStream file = File.Create(Path.Combine(pluginDir, "Morta4P.dll")))
-            {
-                dll.CopyTo(file);
-            }
-
-            Console.WriteLine();
             Console.WriteLine("Pronto! Abra o Children of Morta pela Steam.");
-            Console.WriteLine("Lembre: todos os jogadores precisam instalar a mesma versão do mod.");
+            Console.WriteLine("Lembre: todos os jogadores precisam da mesma versão do mod.");
         }
 
         private static void Uninstall(string gamePath)

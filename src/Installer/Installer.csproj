@@ -8,7 +8,7 @@
     <AssemblyName>Morta4P-Installer</AssemblyName>
     <RootNamespace>Morta4P.Installer</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <Version>0.8.1</Version>
+    <Version>0.9.0</Version>
     <Product>Children of Morta 4P</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <BepInExVersion>5.4.23.5</BepInExVersion>
@@ -20,6 +20,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Web.Extensions" />
   </ItemGroup>
 
   <!-- Build the plugin first; only its DLL is embedded, nothing is referenced. -->

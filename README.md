@@ -2,7 +2,7 @@
 
 Mod para **Children of Morta** (Steam) que aumenta o co-op online de 2 para **até 4 jogadores**.
 
-Status: **v0.8.1, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
+Status: **v0.9.0, experimental**. A seleção de personagem e o HUD já foram testados no solo com a prévia (F9), mas uma partida real com 3 ou 4 jogadores ainda não foi testada. Faça backup dos seus saves.
 
 ## Instalação
 
@@ -11,15 +11,18 @@ Faça isto **em todos os PCs** que vão jogar juntos.
 ### Jeito fácil: instalador
 
 1. Feche o jogo.
-2. Baixe o `Morta4P-Installer.exe` da última versão em [Releases](../../releases).
-3. Execute. Ele procura o Children of Morta nas bibliotecas da Steam, instala o BepInEx (se ainda não tiver) e o mod.
-4. Escolha **[1] Instalar**. Para atualizar depois, é só baixar o instalador novo e rodar de novo.
+2. Baixe o `Morta4P-Installer.exe` em [Releases](../../releases). Basta baixar uma vez: ele sempre busca a versão mais recente do mod no GitHub.
+3. Execute. Ele procura o Children of Morta nas bibliotecas da Steam.
+4. Escolha uma opção:
+   - **[1] Instalar:** instala o BepInEx (se ainda não tiver) e a versão mais recente do mod.
+   - **[2] Atualizar mod:** baixa e instala a versão mais recente do mod.
+   - **[3] Desinstalar:** remove o mod e, se você quiser, o BepInEx também.
 
 Observações:
 - O Windows pode mostrar "O Windows protegeu o computador", porque o instalador não tem assinatura digital. Clique em **Mais informações → Executar assim mesmo**.
+- Sem internet, ele instala a versão do mod que vem dentro do próprio instalador.
 - Se ele não achar o jogo, cole o caminho da pasta do jogo quando ele pedir.
 - Se o jogo estiver numa pasta protegida, ele pede permissão de administrador.
-- A opção **[2] Desinstalar** remove o mod e, se você quiser, o BepInEx também.
 
 ### Instalação manual
 
@@ -36,7 +39,7 @@ Observações:
 2. Crie a pasta `BepInEx\plugins\Morta4P\` dentro da pasta do jogo e coloque o `Morta4P.dll` nela.
 3. Abra o jogo pela Steam.
 
-Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.8.1 loaded. MaxPlayers=4`.
+Para conferir se carregou, abra `BepInEx\LogOutput.log`. Deve aparecer a linha `Morta4P 0.9.0 loaded. MaxPlayers=4`.
 
 ### Jogar
 
