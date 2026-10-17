@@ -17,10 +17,10 @@ namespace Morta4P
     // Each client ignores animation data for its own player, which it already plays locally.
     internal static class AnimationSync
     {
-        private static readonly ConditionalWeakTable<AnimationSyncerModule, PlayerBase> owners_ =
-            new ConditionalWeakTable<AnimationSyncerModule, PlayerBase>();
+        private static readonly ConditionalWeakTable<NetSyncerModule, PlayerBase> owners_ =
+            new ConditionalWeakTable<NetSyncerModule, PlayerBase>();
 
-        internal static PlayerBase PlayerOf(AnimationSyncerModule syncer)
+        internal static PlayerBase PlayerOf(NetSyncerModule syncer)
         {
             if (!owners_.TryGetValue(syncer, out PlayerBase player))
             {
@@ -80,6 +80,41 @@ namespace Morta4P
         {
             PlayerBase player = AnimationSync.PlayerOf(__instance);
             // A client's own player is animated locally; host data for it is a delayed echo.
+            return player == null || !player.pLocalNumber.GetIsLocal();
+        }
+    }
+
+    // Same for the facing direction: FaceDirectionSyncerModule is send-enabled on the host
+    // only for the host's own player, so other clients saw a client's player walk left
+    // while still facing right.
+    [HarmonyPatch(typeof(NetSyncerModule), nameof(NetSyncerModule.CheckIsSendEnabled))]
+    internal static class NetSyncerModule_CheckIsSendEnabled
+    {
+        private static void Postfix(NetSyncerModule __instance, ref bool __result)
+        {
+            if (__result || !(__instance is FaceDirectionSyncerModule))
+            {
+                return;
+            }
+            LobbyManager lobby = LobbyManager.sSingleton;
+            if (lobby == null || !lobby.pIsMaster || lobby.pSlaveClientsCount < 2 || !__instance.isActiveAndEnabled)
+            {
+                return;
+            }
+            PlayerBase player = AnimationSync.PlayerOf(__instance);
+            if (player != null && !player.pLocalNumber.GetIsLocal() && !player.pIsCompanion)
+            {
+                __result = true;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(FaceDirectionSyncerModule), "SlaveTick_AfterReceive")]
+    internal static class FaceDirectionSyncerModule_SlaveTick_AfterReceive
+    {
+        private static bool Prefix(FaceDirectionSyncerModule __instance)
+        {
+            PlayerBase player = AnimationSync.PlayerOf(__instance);
             return player == null || !player.pLocalNumber.GetIsLocal();
         }
     }
