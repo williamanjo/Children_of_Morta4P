@@ -17,6 +17,7 @@ namespace Morta4P
         internal static ConfigEntry<int> MaxPlayers;
         internal static ConfigEntry<float> PanelScale;
         internal static ConfigEntry<int> XPSplitMax;
+        internal static ConfigEntry<float> OtherPlayerSoundDistance;
         internal static ConfigEntry<float> PanelSpacing;
         internal static ConfigEntry<bool> UnlockStarterCharacters;
         internal static ConfigEntry<float> HudSpacing;
@@ -43,6 +44,8 @@ namespace Morta4P
                     new AcceptableValueRange<int>(2, 4)));
             XPSplitMax = settings_.Bind("Gameplay", "XPSplitMax", 2,
                 "XP from a kill is divided by the number of players, capped at this value, and every player gets that share. 2: 3-4 players level like 2-player co-op. 0: divide by every player (original).");
+            OtherPlayerSoundDistance = settings_.Bind("Sound", "OtherPlayerMaxDistance", 14f,
+                "Online: sounds made by another player's character (attacks, steps, ...) are only heard when that character is within this distance (world units) of your own. 0 = always heard (original).");
             PanelScale = settings_.Bind("CharacterSelect", "PanelScale", 0.5f,
                 new ConfigDescription("Scale of the character panels when more than 2 players are in the lobby.",
                     new AcceptableValueRange<float>(0.3f, 1f)));
