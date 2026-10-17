@@ -229,11 +229,7 @@ namespace Morta4P
             {
                 byte[] buffer = save_data.ToByteBuffer(save_data_type);
                 SaveProfileBuffer.Invoke(__instance, new object[] { save_data_type, buffer, slot_id, done_callback });
-                foreach (SlaveClient slave in lobby.pSlaveClients.ToArray())
-                {
-                    ushort bulk_id = slave.pBulkService.PushBulk(buffer);
-                    __instance.pRMCBridge.SendRMCToSlave(slave.pSlaveIndex, RMCHandler.ErrorCondition.All, __instance, 9, bulk_id);
-                }
+                HostSaveQueue.Enqueue(__instance, buffer, lobby.pSlaveClients.ToArray());
                 return false;
             }
             catch (Exception e)
@@ -241,6 +237,76 @@ namespace Morta4P
                 Plugin.Log.LogError($"Host save sync: {e}");
                 return true;
             }
+        }
+    }
+
+    // The host save copy is large. Pushing it to every client in the same frame queued the
+    // whole buffer several times at once; it now goes to one client, and the next client
+    // only gets it once the previous client's command queue has drained.
+    internal static class HostSaveQueue
+    {
+        private static readonly AccessTools.FieldRef<CommandClientService, List<NetCommand>> SendQueueField =
+            AccessTools.FieldRefAccess<CommandClientService, List<NetCommand>>("command_send_queue_");
+
+        private const float MaxWaitSeconds = 20f;
+
+        private static ProfileManager manager_;
+        private static byte[] buffer_;
+        private static readonly Queue<SlaveClient> pending_ = new Queue<SlaveClient>();
+        private static SlaveClient sending_;
+        private static float started_;
+
+        internal static void Enqueue(ProfileManager manager, byte[] buffer, SlaveClient[] slaves)
+        {
+            // A newer save replaces whatever is still waiting.
+            manager_ = manager;
+            buffer_ = buffer;
+            pending_.Clear();
+            foreach (SlaveClient slave in slaves)
+            {
+                if (slave != null)
+                {
+                    pending_.Enqueue(slave);
+                }
+            }
+            sending_ = null;
+            Update();
+        }
+
+        // Called every frame by the plugin.
+        internal static void Update()
+        {
+            if (buffer_ == null)
+            {
+                return;
+            }
+            if (sending_ != null)
+            {
+                bool gone = sending_ == null || !LobbyManager.sSingleton.pSlaveClients.Contains(sending_);
+                bool drained = gone || SendQueueField(sending_.pGenericCommandService).Count == 0;
+                bool timedOut = UnityEngine.Time.realtimeSinceStartup - started_ > MaxWaitSeconds;
+                if (!drained && !timedOut)
+                {
+                    return;
+                }
+                sending_ = null;
+            }
+            while (pending_.Count > 0)
+            {
+                SlaveClient next = pending_.Dequeue();
+                if (next == null || !LobbyManager.sSingleton.pSlaveClients.Contains(next))
+                {
+                    continue;
+                }
+                ushort bulk_id = next.pBulkService.PushBulk(buffer_);
+                manager_.pRMCBridge.SendRMCToSlave(next.pSlaveIndex, RMCHandler.ErrorCondition.All, manager_, 9, bulk_id);
+                sending_ = next;
+                started_ = UnityEngine.Time.realtimeSinceStartup;
+                Plugin.Log.LogInfo($"Host save copy sent to client {next.pSlaveIndex} ({buffer_.Length} bytes)");
+                return;
+            }
+            buffer_ = null;
+            manager_ = null;
         }
     }
 

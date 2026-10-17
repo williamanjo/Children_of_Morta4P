@@ -139,6 +139,7 @@ namespace Morta4P
             {
                 PanelLayout.Update();
                 ProfileManager_FetchingHostSaveBufferDone.Update();
+                HostSaveQueue.Update();
             }
             catch (System.Exception e)
             {
