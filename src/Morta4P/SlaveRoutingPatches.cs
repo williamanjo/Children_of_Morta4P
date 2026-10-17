@@ -503,4 +503,29 @@ namespace Morta4P
             return true;
         }
     }
+
+    // Every profile change (gold, XP, items, ...) logged "Client count is not supported!"
+    // as an error once the host had two or more clients. The code after it already handles
+    // every client; only the log is wrong. Unity captures a stack trace and writes the log
+    // file for each error, and in a fight this ran thousands of times on the host, stalling
+    // its frames: positions reached the clients late and characters jumped around.
+    [HarmonyPatch(typeof(ProfileManager), "OnProfileModified")]
+    internal static class ProfileManager_OnProfileModified
+    {
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            int start = codes.FindIndex(c => c.opcode == OpCodes.Ldstr && c.operand is string text && text.StartsWith("Client count is not supported"));
+            int call = start < 0 ? -1 : codes.FindIndex(start, c => (c.opcode == OpCodes.Call || c.opcode == OpCodes.Callvirt)
+                && c.operand is MethodInfo method && method.DeclaringType == typeof(UnityEngine.Debug) && method.Name == "LogError");
+            if (call < 0 || ((MethodInfo)codes[call].operand).GetParameters().Length != 1)
+            {
+                Plugin.Log.LogError("OnProfileModified: client count log not found");
+                return codes;
+            }
+            // Drop the formatted message instead of logging it.
+            codes[call] = new CodeInstruction(OpCodes.Pop).MoveLabelsFrom(codes[call]);
+            return codes;
+        }
+    }
 }
