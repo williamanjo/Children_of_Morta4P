@@ -57,6 +57,10 @@ namespace Morta4P
                 go.name = original.gameObject.name + "_Morta4P_" + (k + 2);
                 extra_[k] = go.GetComponent<MiniLobbyPlayer>();
                 extraIndex_[k] = -1;
+                // The original entry is usually hidden (inactive) when this runs, so the clone
+                // starts inactive and its Awake would only run on the first UpdateData, where
+                // it calls Show(false) and hides the entry again. Run Awake now instead.
+                go.SetActive(true);
                 extra_[k].Show(show: false, is_joystick: false);
             }
             Place();
