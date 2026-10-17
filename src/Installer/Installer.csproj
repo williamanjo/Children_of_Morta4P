@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Single-file installer: Morta4P.dll and the BepInEx zip are embedded as resources.
        .NET Framework 4.7.2 ships with Windows 10/11, so players install nothing else. -->
@@ -8,7 +8,7 @@
     <AssemblyName>Morta4P-Installer</AssemblyName>
     <RootNamespace>Morta4P.Installer</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <Version>0.9.3</Version>
+    <Version>0.9.4</Version>
     <Product>Children of Morta 4P</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <BepInExVersion>5.4.23.5</BepInExVersion>
