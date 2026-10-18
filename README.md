@@ -124,3 +124,18 @@ dotnet build src/Installer/Installer.csproj -c Release -p:GamePath="C:\caminho\p
 ```
 
 O executável fica em `src/Installer/bin/Release/net472/Morta4P-Installer.exe`.
+
+### Estrutura do código
+
+Cada arquivo em `src/Morta4P` agrupa os patches (Harmony) de uma área do jogo:
+
+| Pasta | Conteúdo |
+|---|---|
+| `Plugin.cs` | Configuração (`morta4p.cfg`), aplicação dos patches e atalhos F9/F10 |
+| `Network` | Pacotes por convidado (`Transport`), snapshots por convidado (`Snapshots`), fila de comandos do host (`CommandQueue`), ids de objetos de rede (`NetObjects`) e envio ao dono de cada dado (`Routing`) |
+| `Lobby` | Limite do lobby Steam, entrada de jogadores, saída e desconexão (`Clients`), status e quadro do lobby (`LobbyStatus`, `MiniLobby`) |
+| `CharacterSelect` | Seleção de personagem, painéis e marcadores P3/P4, personagens iniciais liberados |
+| `Hud` | HUD dos outros jogadores durante a run |
+| `Profile` | Cópia do save do host para cada convidado e mudanças de perfil |
+| `Sync` | Replicação na run: animações e direção, efeitos, projéteis, sons e tremor de câmera |
+| `Gameplay` | Posições de P3/P4, loot, revive, cutscenes, coletáveis, loja de vida, XP, progressão e painéis de item |

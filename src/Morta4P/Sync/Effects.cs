@@ -110,18 +110,4 @@ namespace Morta4P
             }
         }
     }
-
-    // Targeted sends count too: if the game sent the call only to the owner (or to the
-    // owners of some players), it is owner-specific and must not be relayed to others.
-    [HarmonyPatch(typeof(LobbyManager), nameof(LobbyManager.QueueCommandOnSlave))]
-    internal static class LobbyManager_QueueCommandOnSlave
-    {
-        private static void Prefix() => EffectRelay.BroadcastCount++;
-    }
-
-    [HarmonyPatch(typeof(LobbyManager), nameof(LobbyManager.QueueCommandOnSlaves), new[] { typeof(Zyklus.Player.PlayerNumberFlag), typeof(NetCommand) })]
-    internal static class LobbyManager_QueueCommandOnSlavesFlag
-    {
-        private static void Prefix() => EffectRelay.BroadcastCount++;
-    }
 }

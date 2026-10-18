@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using Altar.Networking;
 using Altar.Steam;
 using HarmonyLib;
+using Zyklus;
+using Zyklus.Managers;
 using Zyklus.Network;
 
 namespace Morta4P
@@ -63,5 +66,31 @@ namespace Morta4P
         }
 
         private static int Limit => Plugin.MaxPlayers.Value;
+    }
+
+    // A client asks the host which bundles to load; the host answered with a broadcast, so
+    // the other clients (not asking) ran a null callback and threw. Reply to the asker only,
+    // and ignore an answer nobody waits for.
+    [HarmonyPatch(typeof(ZyklusAssetBundleManager), "SendMasterTrainmanRequiredBundles")]
+    internal static class ZyklusAssetBundleManager_SendMasterTrainmanRequiredBundles
+    {
+        private static readonly FieldInfo CallbackField = AccessTools.Field(typeof(ZyklusAssetBundleManager), "fetch_done_callback_");
+
+        private static bool Prefix(ZyklusAssetBundleManager __instance, List<ZyklusAssetBundles> bundles)
+        {
+            LobbyManager lobby = LobbyManager.sSingleton;
+            if (lobby.pIsMaster)
+            {
+                NetIdentityBase requester = LobbyStatus.CurrentSender?.pID;
+                if (requester == null)
+                {
+                    return true;
+                }
+                __instance.pRMCBridge.SendRMCToSlave(requester, RMCHandler.ErrorCondition.All, __instance, 2, bundles);
+                return false;
+            }
+            // Client: only handle the answer if this client asked.
+            return CallbackField.GetValue(__instance) != null;
+        }
     }
 }

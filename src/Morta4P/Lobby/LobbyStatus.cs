@@ -6,7 +6,6 @@ using HarmonyLib;
 using Zyklus;
 using Zyklus.Managers;
 using Zyklus.Network;
-using Zyklus.Player;
 using Zyklus.UI;
 
 namespace Morta4P
