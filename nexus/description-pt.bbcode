@@ -1,0 +1,75 @@
+[size=5][b]Children of Morta 4P[/b][/size]
+Aumenta o co-op [b]online pela Steam[/b] de 2 para [b]até 4 jogadores[/b]. Cada um joga no próprio PC, com a própria câmera, como no co-op online original.
+
+[b]Status: experimental.[/b] Já foram jogadas partidas completas com 3 jogadores, mas ainda podem aparecer bugs. Faça backup dos seus saves.
+
+[line]
+[size=4][b]O que o mod faz[/b][/size]
+[list]
+[*][b]Lobby:[/b] o host convida até 3 amigos pelo convite da Steam.
+[*][b]Seleção de personagem:[/b] painéis e marcações para P3 e P4. A partida só começa quando todos escolhem.
+[*][b]Personagens iniciais:[/b] com 3 ou mais jogadores, John, Linda, Mark e Kevin ficam liberados na seleção mesmo num save do começo. O save não é alterado.
+[*][b]HUD:[/b] cada parceiro tem o próprio HUD (vida, nome e status).
+[*][b]Lobby na casa:[/b] o quadro do canto superior esquerdo mostra todos os jogadores, cada um com o seu status.
+[*][b]Na run:[/b] posições, animações, direção, efeitos de ataque e projéteis de todos aparecem para todos.
+[*][b]XP:[/b] dividida por no máximo 2 (configurável). Com 4 jogadores, 10 de XP dá 5 para cada um.
+[*][b]Itens:[/b] relíquias, consumíveis e runas para "todos os jogadores" valem para os 4. A loja de cura cura cada jogador uma vez.
+[*][b]Revive e saídas:[/b] todos veem quem caiu. Se um jogador sai, a partida continua para os outros.
+[*][b]Som:[/b] os sons do personagem de outro jogador só tocam se ele estiver perto de você (configurável).
+[/list]
+
+[line]
+[size=4][b]Requisitos[/b][/size]
+[list]
+[*]Children of Morta na [b]Steam[/b], versão atual.
+[*][url=https://github.com/BepInEx/BepInEx/releases]BepInEx 5.4.23 para Windows x64[/url] ([b]BepInEx_win_x64_5.4.23.x.zip[/b]).
+[*][b]Todos os jogadores[/b] precisam do mod, na [b]mesma versão[/b].
+[/list]
+
+[line]
+[size=4][b]Instalação[/b][/size]
+[b]Manual[/b]
+[list=1]
+[*]Abra a pasta do jogo: na Steam, botão direito em Children of Morta → Gerenciar → Navegar pelos arquivos locais.
+[*]Se ainda não tiver o BepInEx, extraia o zip dele dentro dessa pasta (ao lado do [b]ChildrenOfMorta.exe[/b]), abra o jogo uma vez e feche.
+[*]Extraia o zip deste mod na mesma pasta. O arquivo deve ficar em [b]BepInEx\plugins\Morta4P\Morta4P.dll[/b].
+[/list]
+Para conferir, abra [b]BepInEx\LogOutput.log[/b]: deve aparecer a linha [b]Morta4P ... loaded[/b].
+
+[b]Instalador (opcional)[/b]
+O [url=https://github.com/williamanjo/Children_of_Morta4P/releases]Morta4P-Installer.exe[/url] acha o jogo, instala o BepInEx e o mod, e tem a opção [b]Atualizar mod[/b], que sempre baixa a versão mais recente. O Windows pode avisar que o arquivo não tem assinatura digital: clique em Mais informações → Executar assim mesmo.
+
+[line]
+[size=4][b]Como jogar[/b][/size]
+[list=1]
+[*]O host entra no jogo e, na casa, convida os amigos pela Steam, [b]um de cada vez[/b].
+[*]Todos escolhem personagens [b]diferentes[/b] e a partida começa.
+[/list]
+[quote][b]Personagens:[/b] dois jogadores não podem usar o mesmo personagem. Além dos 4 iniciais liberados pelo mod, Lucy, Joey, Apon e Bec só aparecem se já estiverem desbloqueados no save. Em algumas partes da história, parte da família vira companheiro controlado pelo jogo e sai da lista. Para ter mais opções, prefira um save mais avançado.[/quote]
+
+[line]
+[size=4][b]Configuração[/b][/size]
+O arquivo [b]BepInEx\config\morta4p.cfg[/b] é criado na primeira execução. As opções principais:
+[list]
+[*][b]MaxPlayers[/b] (padrão 4): total de jogadores, igual em todos os PCs.
+[*][b]XPSplitMax[/b] (padrão 2): por quantos jogadores, no máximo, a XP é dividida. 0 = original.
+[*][b]UnlockStarterCharacters[/b] (padrão true): libera os 4 personagens iniciais com 3 ou mais jogadores.
+[*][b]OtherPlayerMaxDistance[/b] (padrão 14): distância máxima para ouvir o personagem de outro jogador. 0 = original.
+[/list]
+A lista completa está no [url=https://github.com/williamanjo/Children_of_Morta4P]GitHub[/url].
+
+[line]
+[size=4][b]Limitações conhecidas[/b][/size]
+[list]
+[*]As cutscenes foram feitas para 2 jogadores: P3 e P4 podem ficar parados ou escondidos nelas.
+[*]A dificuldade não aumenta com mais jogadores; é a mesma do co-op de 2.
+[*]Só online pela Steam. O co-op local continua com 2 jogadores.
+[/list]
+
+[line]
+[size=4][b]Reportar problema[/b][/size]
+Diga quem teve o problema, quem viu e quando, e mande o [b]Player.log[/b] de [b]todos[/b] os jogadores:
+[code]%USERPROFILE%\AppData\LocalLow\Dead Mage\Children of Morta\Player.log[/code]
+Pode postar na aba Bugs ou abrir uma issue no [url=https://github.com/williamanjo/Children_of_Morta4P/issues]GitHub[/url].
+
+[b]Código-fonte:[/b] [url=https://github.com/williamanjo/Children_of_Morta4P]github.com/williamanjo/Children_of_Morta4P[/url]

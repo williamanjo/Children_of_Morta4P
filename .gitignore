@@ -3,3 +3,4 @@ obj/
 .vs/
 *.user
 PESQUISA.md
+nexus/*.zip

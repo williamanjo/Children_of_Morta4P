@@ -42,4 +42,15 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BepInExPath)\plugins\Morta4P" />
   </Target>
 
+  <!-- Nexus Mods archive: extracted into the game folder it puts the plugin where BepInEx
+       loads it (BepInEx\plugins\Morta4P\Morta4P.dll). -->
+  <Target Name="PackNexus" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <NexusStage>$(IntermediateOutputPath)nexus</NexusStage>
+    </PropertyGroup>
+    <RemoveDir Directories="$(NexusStage)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(NexusStage)\BepInEx\plugins\Morta4P" />
+    <ZipDirectory SourceDirectory="$(NexusStage)" DestinationFile="$(OutDir)Morta4P-$(Version)-nexus.zip" Overwrite="true" />
+  </Target>
+
 </Project>

@@ -1,0 +1,5 @@
+PT (até 255 caracteres):
+Co-op online pela Steam para até 4 jogadores. Painéis P3/P4 na seleção, HUD de cada parceiro, lobby com todos os jogadores, XP e itens para os 4. Requer BepInEx 5 em todos os PCs.
+
+EN (up to 255 characters):
+Online co-op over Steam for up to 4 players. P3/P4 panels in character select, a HUD for every partner, a lobby widget with everyone, XP and items for all four. Requires BepInEx 5 on every PC.
