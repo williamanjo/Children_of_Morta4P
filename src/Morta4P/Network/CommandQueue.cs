@@ -6,7 +6,8 @@ namespace Morta4P
 {
     // Host broadcasts (LobbyManager.QueueCommandOnSlaves and its variants). Every send is
     // counted for the effect relay, and the broadcast skips clients that must not get a
-    // command: the owner of a networked projectile, or everyone but the owner of a client
+    // command: the owner of a networked projectile (its spawn and every later command for
+    // it), or everyone but the owner of a client
     // connection that is being released.
 
     [HarmonyPatch(typeof(LobbyManager), nameof(LobbyManager.QueueCommandOnSlaves), new[] { typeof(NetCommand) })]
@@ -31,7 +32,7 @@ namespace Morta4P
                 }
                 return false;
             }
-            NetIdentityBase excluded = ProjectileOwner.Excluded;
+            NetIdentityBase excluded = ProjectileOwner.SkipFor(command);
             if (excluded == null)
             {
                 return true;

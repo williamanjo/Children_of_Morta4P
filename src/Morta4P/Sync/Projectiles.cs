@@ -16,11 +16,59 @@ namespace Morta4P
     // never saw them.
     //
     // On the host with two or more clients, those shots are spawned networked, and the
-    // network spawn skips the owner, who already shows its predicted copy.
+    // network spawn skips the owner, who already shows its predicted copy. Later commands
+    // for that object (hit RMCs, its release) skip the owner too: the owner never had it, and
+    // each one logged an error there. Lucy's rapid primary fire made that a stream of errors
+    // and the owner lagged.
     internal static class ProjectileOwner
     {
         [ThreadStatic]
         internal static NetIdentityBase Excluded;
+
+        // Network instance id of each projectile spawned without its owner -> that owner.
+        private static readonly Dictionary<ushort, NetIdentityBase> instances_ = new Dictionary<ushort, NetIdentityBase>();
+
+        // The client a host broadcast must skip, or null.
+        internal static NetIdentityBase SkipFor(NetCommand command)
+        {
+            switch (command)
+            {
+                case InstantiateNetCommand spawn:
+                    if (Excluded != null)
+                    {
+                        instances_[spawn.pNetInstanceID] = Excluded;
+                    }
+                    else
+                    {
+                        instances_.Remove(spawn.pNetInstanceID); // id reused by an object everyone gets
+                    }
+                    return Excluded;
+                case RMCNetCommand rmc:
+                    return OwnerOf(rmc.pReceiverAddress) ?? Excluded;
+                case ReleaseNetCommand release:
+                    NetIdentityBase owner = OwnerOf(release.pAddress);
+                    if (owner != null)
+                    {
+                        instances_.Remove(release.pAddress.pNetGOInstanceID);
+                    }
+                    return owner ?? Excluded;
+                default:
+                    return Excluded;
+            }
+        }
+
+        private static NetIdentityBase OwnerOf(NetGOAddress address) =>
+            address != null && address.pMode == NetGOAddress.Mode.Dynamic && instances_.TryGetValue(address.pNetGOInstanceID, out NetIdentityBase owner)
+                ? owner
+                : null;
+
+        internal static void Clear() => instances_.Clear();
+    }
+
+    [HarmonyPatch(typeof(NetManager), nameof(NetManager.ResetInstanceID))]
+    internal static class NetManager_ResetInstanceID
+    {
+        private static void Postfix() => ProjectileOwner.Clear();
     }
 
     [HarmonyPatch]
